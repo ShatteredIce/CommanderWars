@@ -7,6 +7,7 @@ public class UnitInfo {
 	double unitX;
 	double unitY;
 	double angle;
+	int color;
 	double[] vertices;
 	double[] outlineVertices;
 	
@@ -14,13 +15,14 @@ public class UnitInfo {
 		
 	}
 	
-	public UnitInfo(int newid, int newownerid, String myteam, double x, double y, double newangle, double[] newvertices, double[] newoutlinevertices){
+	public UnitInfo(int newid, int newownerid, String myteam, double x, double y, double newangle, int newcolor, double[] newvertices, double[] newoutlinevertices){
 		id = newid;
 		ownerid = newownerid;
 		team = myteam;
 		unitX = x;
 		unitY = y;
 		angle = newangle;
+		color = newcolor;
 		vertices = newvertices;
 		outlineVertices = newoutlinevertices;
 	}
@@ -53,6 +55,10 @@ public class UnitInfo {
 		return angle;
 	}
 	
+	public int getColor() {
+		return color;
+	}
+	
 	public double[] getVertices(){
 		return vertices;
 	}
@@ -60,5 +66,6 @@ public class UnitInfo {
 	public double[] getOutlineVertices(){
 		return outlineVertices;
 	}
+
 
 }

@@ -36,7 +36,8 @@ public class GameClient extends Listener{
 	// The window handle
 	private long window;
 	
-	GameLogic gamelogic = new GameLogic();
+	static GameLogic gamelogic = new GameLogic();
+	static GameTextures gametextures;
 	
 	//networking
 	static Client client;
@@ -221,10 +222,9 @@ public class GameClient extends Listener{
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		
-		loadMap();
+		gametextures = new GameTextures();
 		
-		final Texture redunit = new Texture("redunit2.png");
-		final Texture unitglow = new Texture("unitglow.png");
+		loadMap();
 
 		
 		final double[] textureCoords = {0, 0, 0, 1, 1, 0, 1, 1};
@@ -254,13 +254,13 @@ public class GameClient extends Listener{
 			
 
 			//display units
-			redunit.bind();
 			for (UnitInfo u : units) {
+				gametextures.loadTexture(u.getColor());
 				model.render(u.getVertices());
 			}
 			
 			//display glow on selected units
-			unitglow.bind();
+			gametextures.loadTexture(0);
 			for (UnitInfo u : units) {
 				for (int i = 0; i < selectedUnitsId.size(); i++) {
 					if(selectedUnitsId.get(i) == u.getId()){

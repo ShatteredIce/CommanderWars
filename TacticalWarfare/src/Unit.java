@@ -12,6 +12,7 @@ public class Unit {
 	Point center;
 	int id;
 	int ownerid;
+	int color;
 	String team;
 	double angle;
 	double current_velocity = 0;
@@ -26,12 +27,13 @@ public class Unit {
 		
 	}
 	
-	public Unit(int myid, int newid, String newteam, double spawnx, double spawny, double spawnangle){
+	public Unit(int myid, int newid, String newteam, double spawnx, double spawny, double spawnangle, int newcolor){
 		id = myid;
 		ownerid = newid;
 		team = newteam;
 		center = new Point(spawnx, spawny);
 		angle = spawnangle;
+		color = newcolor;
 		createPoints();
 		setPoints();
 	}
@@ -175,6 +177,10 @@ public class Unit {
 	
 	public double getAngle(){
 		return angle;
+	}
+	
+	public int getColor() {
+		return color;
 	}
 
 }

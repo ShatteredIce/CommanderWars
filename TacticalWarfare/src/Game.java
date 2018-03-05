@@ -44,6 +44,7 @@ public class Game extends Listener{
 	private long window;
 	
 	static GameLogic gamelogic = new GameLogic();
+	static GameTextures gametextures;
 	
 	//networking
 	static Server server;
@@ -107,7 +108,7 @@ public class Game extends Listener{
 		double unitY = 100*(random.nextInt(6) + 1);
 		double unitAngle = random.nextInt(360);
 		System.out.println(unitId + " " + newplayer.getId());
-		units.add(createUnit(newplayer.getId(), unitTeam, unitX, unitY, unitAngle));
+		units.add(createUnit(newplayer.getId(), unitTeam, unitX, unitY, unitAngle, 2));
 		System.out.println("finished recieving client " + c.getID());
 	}
 	
@@ -246,6 +247,8 @@ public class Game extends Listener{
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		
+		gametextures = new GameTextures();
+		
 		generateMap();
 //		loadUnits();
 		Player newplayer = new Player("derp", serverPlayerId);
@@ -255,11 +258,9 @@ public class Game extends Listener{
 //		double unitX = 100*(random.nextInt(6) + 1);
 //		double unitY = 100*(random.nextInt(6) + 1);
 		double unitAngle = random.nextInt(360);
-		Unit serverUnit = createUnit(newplayer.getId(), unitTeam, 100, 100, unitAngle);
+		Unit serverUnit = createUnit(newplayer.getId(), unitTeam, 100, 100, unitAngle, 1);
 		units.add(serverUnit);
 		
-		final Texture redunit = new Texture("redunit2.png");
-		final Texture unitglow = new Texture("unitglow.png");
 
 		
 		final double[] textureCoords = {0, 0, 0, 1, 1, 0, 1, 1};
@@ -288,17 +289,16 @@ public class Game extends Listener{
 					model.render(tiles[i][j].getVertices());
 				}
 			}
-			
 
 			//display units
-			redunit.bind();
 			for (Unit u : units) {		
 				u.update();
+				gametextures.loadTexture(u.getColor());
 				model.render(u.getVertices());
 			}
 			
 			//display glow on selected units
-			unitglow.bind();
+			gametextures.loadTexture(0);
 			for (Unit u : units) {
 				for (int i = 0; i < selectedUnitsId.size(); i++) {
 					if(selectedUnitsId.get(i) == u.getId()){
@@ -506,8 +506,8 @@ public class Game extends Listener{
 		return tilePos;
 	}
 	
-	public Unit createUnit(int newownerid, String newteam, double newx, double newy, double newangle){
-		Unit u = new Unit(unitId, newownerid, newteam, newx, newy, newangle);
+	public Unit createUnit(int newownerid, String newteam, double newx, double newy, double newangle, int newcolor){
+		Unit u = new Unit(unitId, newownerid, newteam, newx, newy, newangle, newcolor);
 		unitId++;
 		return u;
 	}
