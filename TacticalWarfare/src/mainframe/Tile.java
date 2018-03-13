@@ -1,3 +1,5 @@
+package mainframe;
+import rendering.Texture;
 
 public class Tile {
 	
@@ -7,6 +9,9 @@ public class Tile {
 	static Texture tex1 = new Texture("mountain.png");
 	static Texture tex2 = new Texture("grass.png");
 	static Texture tex3 = new Texture("forest.png");
+	static Texture tex4 = new Texture("neutralflag.png");
+	static Texture tex5 = new Texture("redflag.png");
+	static Texture tex6 = new Texture("blueflag.png");
 	
 	double[] vertices = new double[8];
 	
@@ -43,6 +48,15 @@ public class Tile {
 		case 3:
 			tex3.bind();
 			break;
+		case 4:
+			tex4.bind();
+			break;
+		case 5:
+			tex5.bind();
+			break;
+		case 6:
+			tex6.bind();
+			break;
 		}
 	}
 	
@@ -50,7 +64,7 @@ public class Tile {
 		switch (id) {
 		case 1:
 			return 20;
-		case 2:
+		case 2 : case 4: case 5: case 6:
 			return 2;
 		case 3:
 			return 4;
@@ -67,12 +81,23 @@ public class Tile {
 		return tileHeight;
 	}
 	
+	public void setId(int newid) {
+		id = newid;
+	}
+	
 	public int getId(){
 		return id;
 	}
 	
 	public double[] getVertices(){
 		return vertices;
+	}
+	
+	public boolean isCapturePoint() {
+		if(id == 4 || id == 5 || id == 6) {
+			return true;
+		}
+		return false;
 	}
 	
 }

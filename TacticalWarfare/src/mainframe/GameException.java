@@ -1,3 +1,4 @@
+package mainframe;
 
 
 public class GameException extends Exception {

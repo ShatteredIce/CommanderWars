@@ -1,3 +1,6 @@
+package rendering;
+import mainframe.GameException;
+
 public class GameTextures {
 	
 	final Texture redunit = new Texture("redunit2.png");

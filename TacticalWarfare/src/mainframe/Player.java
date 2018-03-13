@@ -1,8 +1,8 @@
+package mainframe;
 import java.util.ArrayList;
 
 
 public class Player {
-	
 	String team;
 	int id;
 	ArrayList<Unit> selectedUnits = new ArrayList<>();

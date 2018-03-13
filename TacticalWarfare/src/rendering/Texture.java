@@ -1,3 +1,4 @@
+package rendering;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import org.lwjgl.BufferUtils;

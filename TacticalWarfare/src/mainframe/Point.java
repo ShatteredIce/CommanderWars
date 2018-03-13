@@ -1,3 +1,4 @@
+package mainframe;
 //Utility class
 public class Point {
 	

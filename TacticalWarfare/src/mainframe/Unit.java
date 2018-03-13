@@ -1,3 +1,4 @@
+package mainframe;
 import java.util.ArrayList;
 
 public class Unit {
@@ -33,7 +34,7 @@ public class Unit {
 		team = newteam;
 		center = new Point(spawnx, spawny);
 		angle = spawnangle;
-		color = newcolor;
+		color = newcolor; //1 for red, 2 for blue
 		createPoints();
 		setPoints();
 	}

@@ -1,7 +1,8 @@
+package packets;
 
 public class MapData {
 	
-	int[][] data;
+	private int[][] data;
 	
 	public MapData(){
 		
@@ -9,6 +10,10 @@ public class MapData {
 	
 	public MapData(int[][] newdata){
 		data = newdata;
+	}
+
+	public int[][] getData() {
+		return data;
 	}
 
 }

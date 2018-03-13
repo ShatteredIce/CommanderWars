@@ -1,3 +1,4 @@
+package mainframe;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
@@ -10,6 +11,16 @@ import org.lwjgl.system.*;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.kryonet.Server;
+
+import packets.MapData;
+import packets.Message;
+import packets.MouseClick;
+import packets.PlayerInfo;
+import packets.TileInfo;
+import packets.UnitInfo;
+import packets.UnitPositions;
+import rendering.GameTextures;
+import rendering.Model;
 
 import java.io.IOException;
 import java.nio.*;
@@ -68,6 +79,7 @@ public class Game extends Listener{
 		server.getKryo().register(MouseClick.class);
 		server.getKryo().register(MapData.class);
 		server.getKryo().register(Message.class);
+		server.getKryo().register(TileInfo.class);
 		server.bind(tcpPort, udpPort);
 		
 		//start server
@@ -123,7 +135,7 @@ public class Game extends Listener{
 	public void received(Connection c, Object obj) {
 		if(obj instanceof MouseClick){
 			MouseClick click = (MouseClick) obj;
-			moveOrder(click.x, click.y, click.unitIds);
+			moveOrder(click.getX(), click.getY(), click.getUnitIds());
 		}
 	}
 	
@@ -278,6 +290,8 @@ public class Game extends Listener{
 			// invoked during this call.
 			glfwPollEvents();
 			
+			updateCapturePoints();
+						
 			updateClients();
 			
 			glEnable(GL_TEXTURE_2D);
@@ -316,13 +330,44 @@ public class Game extends Listener{
 		new Game().run();
 	}
 	
+	public void updateCapturePoints() {
+		for (int i = 0; i < mapWidth; i++) {
+			for (int j = 0; j < mapHeight; j++) {
+				if(tiles[i][j].isCapturePoint()) {
+					checkCapturePoint(i, j);
+				}
+			}
+		}
+	}
+	
+	public void checkCapturePoint(int tileX, int tileY) {
+		int capturingColor = 0;
+		for (int i = 0; i < units.size(); i++) {
+			int[] position = currentTile(units.get(i).getX(), units.get(i).getY());
+			if(tileX == position[0] && tileY == position[1]){
+				if(units.get(i).getColor() + 4 == tiles[tileX][tileY].getId()) {
+					return;
+				}
+				else {
+					capturingColor = units.get(i).getColor();
+				}
+			}
+		}
+		if(capturingColor != 0) {
+			tiles[tileX][tileY].setId(capturingColor + 4);
+			map[tileX][tileY] = capturingColor + 4;
+			server.sendToAllTCP(new TileInfo(tileX, tileY, capturingColor + 4));
+			
+		}
+	}
+	
 	public void generateMap(){
 		mapWidth = 10;
 		mapHeight = 10;
 		map = new int[mapWidth][mapHeight];
 		for (int i = 0; i < mapWidth; i++) {
 			for (int j = 0; j < mapHeight; j++) {
-				map[i][j] = random.nextInt(3) + 1;
+				map[i][j] = random.nextInt(4) + 1;
 			}
 		}
 		loadMap();

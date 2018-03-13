@@ -1,4 +1,6 @@
+package mainframe;
 import java.util.ArrayList;
+
 import org.lwjgl.*;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
@@ -7,6 +9,16 @@ import org.lwjgl.system.*;
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
+
+import packets.MapData;
+import packets.Message;
+import packets.MouseClick;
+import packets.PlayerInfo;
+import packets.TileInfo;
+import packets.UnitInfo;
+import packets.UnitPositions;
+import rendering.GameTextures;
+import rendering.Model;
 
 import java.io.IOException;
 import java.nio.*;
@@ -61,6 +73,7 @@ public class GameClient extends Listener{
 		client.getKryo().register(MouseClick.class);
 		client.getKryo().register(MapData.class);
 		client.getKryo().register(Message.class);
+		client.getKryo().register(TileInfo.class);
 		
 		//start the client
 		client.start();
@@ -171,17 +184,17 @@ public class GameClient extends Listener{
 	public void received(Connection c, Object obj) {
 		if(obj instanceof PlayerInfo){
 			PlayerInfo packet = (PlayerInfo) obj;
-			switch (packet.action) {
+			switch (packet.getAction()) {
 			//create player
 			case 1:
-				players.add(new Player(packet.team, packet.id));
-				client.sendTCP(new Message("recieved new player", packet.id));
-				System.out.println("recieved player " + packet.id);
+				players.add(new Player(packet.getTeam(), packet.getId()));
+				client.sendTCP(new Message("recieved new player", packet.getId()));
+				System.out.println("recieved player " + packet.getId());
 				break;
 			//delete player
 			case 2:
 				for (int i = 0; i < players.size(); i++) {
-					if(players.get(i).getId() == packet.id){
+					if(players.get(i).getId() == packet.getId()){
 						players.remove(i);
 						i--;
 					}
@@ -191,13 +204,20 @@ public class GameClient extends Listener{
 		}
 		else if(obj instanceof UnitPositions){
 			UnitPositions packet = (UnitPositions) obj;
-			units = packet.unitdata;
+			units = packet.getUnitdata();
 		}
 		else if(obj instanceof MapData){
 			MapData packet = (MapData) obj;
-			map = packet.data;
+			map = packet.getData();
 			mapWidth = map.length;
 			mapHeight = map[0].length;
+		}
+		else if(obj instanceof TileInfo) {
+			TileInfo info = (TileInfo) obj;
+			map[info.getTileX()][info.getTileY()] = info.getTileId();
+			if(tiles != null) {
+				tiles[info.getTileX()][info.getTileY()].setId(info.getTileId());
+			}
 		}
 	}
 	
