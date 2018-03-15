@@ -42,6 +42,10 @@ public class Game extends Listener{
 	Tile[][] tiles = null;
 	int unitId = 0;
 	
+	int tick = 0;
+	int ticksPerDay = 24000;
+	float lightLevel = 1;
+	
 	ArrayList<Player> players = new ArrayList<>();
 	ArrayList<Unit> units = new ArrayList<>();
 	ArrayList<Integer> selectedUnitsId = new ArrayList<>();
@@ -106,7 +110,7 @@ public class Game extends Listener{
 	public void connected(Connection c){
 		System.out.println("recieved connection from " + c.getRemoteAddressTCP().getHostString());
 		//send map
-		server.sendToTCP(c.getID(), new MapData(map));
+		server.sendToTCP(c.getID(), new MapData(map, tick));
 		//add previous players
 		for (int i = 0; i < players.size(); i++) {
 			Player previous = players.get(i);
@@ -247,10 +251,7 @@ public class Game extends Listener{
 		// bindings available for use.
 		GL.createCapabilities();
 		
-		glMatrixMode(GL_PROJECTION);
-        glLoadIdentity(); // Resets any previous projection matrices
-        glOrtho(0, WINDOW_WIDTH, WINDOW_HEIGHT, 0, 1, -1);
-        glMatrixMode(GL_MODELVIEW);
+		projectTrueWindowCoordinates();
 
 		// Set the clear color
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -296,6 +297,7 @@ public class Game extends Listener{
 			
 			glEnable(GL_TEXTURE_2D);
 			
+			
 			//display tiles
 			for (int i = 0; i < tiles.length; i++) {
 				for (int j = 0; j < tiles[0].length; j++) {
@@ -303,7 +305,7 @@ public class Game extends Listener{
 					model.render(tiles[i][j].getVertices());
 				}
 			}
-
+			
 			//display units
 			for (Unit u : units) {		
 				u.update();
@@ -321,7 +323,33 @@ public class Game extends Listener{
 				}
 			}
 			
+			
 			glDisable(GL_TEXTURE_2D);
+			
+			tick++;
+			if(tick > ticksPerDay) {
+				tick = 0;
+			}
+			else if(tick < 2000) {
+				lightLevel = Math.abs(0.5f - (float) tick/4000);
+			}
+			else if(tick < 12000) {
+				lightLevel = 0;
+			}
+			else if(tick < 14000) {
+				lightLevel = ((float) tick-12000) / 4000;
+			}
+			else {
+				lightLevel = 0.5f;
+			}
+			
+			glColor4f(0f, 0f, 0f, lightLevel);
+			
+			gametextures.loadTexture(-1);
+			model.render(new double[] {0, 0, 0, WINDOW_HEIGHT, WINDOW_WIDTH, 0, WINDOW_WIDTH, WINDOW_HEIGHT});
+			
+			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+			
 			glfwSwapBuffers(window); // swap the color buffers
 		}
 	}
@@ -555,6 +583,14 @@ public class Game extends Listener{
 		Unit u = new Unit(unitId, newownerid, newteam, newx, newy, newangle, newcolor);
 		unitId++;
 		return u;
+	}
+	
+	
+	public void projectTrueWindowCoordinates(){
+		glMatrixMode(GL_PROJECTION);
+        glLoadIdentity(); // Resets any previous projection matrices
+        glOrtho(0, WINDOW_WIDTH, WINDOW_HEIGHT, 0, 1, -1);
+        glMatrixMode(GL_MODELVIEW);
 	}
 
 }

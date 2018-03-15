@@ -39,6 +39,10 @@ public class GameClient extends Listener{
 	int[][] map;
 	Tile[][] tiles = null;
 	
+	float tick = 0;
+	int ticksPerDay = 24000;
+	float lightLevel = 1;
+	
 	ArrayList<Player> players = new ArrayList<>();
 	ArrayList<UnitInfo> units = new ArrayList<>();
 	ArrayList<Integer> selectedUnitsId = new ArrayList<>();
@@ -211,6 +215,7 @@ public class GameClient extends Listener{
 			map = packet.getData();
 			mapWidth = map.length;
 			mapHeight = map[0].length;
+			tick = packet.getTick();
 		}
 		else if(obj instanceof TileInfo) {
 			TileInfo info = (TileInfo) obj;
@@ -290,6 +295,31 @@ public class GameClient extends Listener{
 			}
 			
 			glDisable(GL_TEXTURE_2D);
+			
+			tick++;
+			if(tick > ticksPerDay) {
+				tick = 0;
+			}
+			else if(tick < 2000) {
+				lightLevel = Math.abs(0.5f - (float) tick/4000);
+			}
+			else if(tick < 12000) {
+				lightLevel = 0;
+			}
+			else if(tick < 14000) {
+				lightLevel = ((float) tick-12000) / 4000;
+			}
+			else {
+				lightLevel = 0.5f;
+			}
+			
+			glColor4f(0f, 0f, 0f, lightLevel);
+			
+			gametextures.loadTexture(-1);
+			model.render(new double[] {0, 0, 0, WINDOW_HEIGHT, WINDOW_WIDTH, 0, WINDOW_WIDTH, WINDOW_HEIGHT});
+			
+			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+			
 			glfwSwapBuffers(window); // swap the color buffers
 		}
 	}

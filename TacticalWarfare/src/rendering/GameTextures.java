@@ -1,4 +1,7 @@
 package rendering;
+import static org.lwjgl.opengl.GL11.GL_TEXTURE_2D;
+import static org.lwjgl.opengl.GL11.glBindTexture;
+
 import mainframe.GameException;
 
 public class GameTextures {
@@ -9,6 +12,8 @@ public class GameTextures {
 	
 	public void loadTexture(int id){
 		switch (id) {
+		case -1:
+			glBindTexture(GL_TEXTURE_2D, 0);
 		case 0:
 			unitglow.bind();
 			break;
