@@ -33,8 +33,20 @@ import static org.lwjgl.system.MemoryUtil.*;
 
 public class Game extends Listener{
 	
-	int WINDOW_WIDTH = 640;
+	int WINDOW_WIDTH = 840;
 	int WINDOW_HEIGHT = 640;
+	
+	int gameScreenWidth = 640;
+	int gameScreenHeight = 640;
+	
+	public double viewX = 0;
+	public double viewY = 0;
+	public double cameraSpeed = 10;
+	public double cameraWidth = 840;
+	public double cameraHeight = 640;
+	
+	public int windowXOffset = 0;
+	public int windowYOffset = 0;
 	
 	int mapWidth;
 	int mapHeight;
@@ -51,6 +63,7 @@ public class Game extends Listener{
 	ArrayList<Integer> selectedUnitsId = new ArrayList<>();
 	
 	boolean clientRecieved = false;
+	int gameState = 3;
 	
 //	Player debug = new Player(this, "debug", 0);
 	int serverPlayerId = 0;
@@ -187,15 +200,32 @@ public class Game extends Listener{
 		glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
 			if ( key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE )
 				glfwSetWindowShouldClose(window, true); // We will detect this in the rendering loop
+			if ( key == GLFW_KEY_MINUS && action == GLFW_PRESS )
+				if(gameState == 3){
+					updateZoomLevel(true);
+				}
+			if ( key == GLFW_KEY_EQUAL && action == GLFW_PRESS )
+				if(gameState == 3){
+					updateZoomLevel(false);
+				}
 		});
-		
+		//mouse clicks
 		glfwSetMouseButtonCallback (window, (window, button, action, mods) -> {
-			DoubleBuffer xpos = BufferUtils.createDoubleBuffer(1);
-			DoubleBuffer ypos = BufferUtils.createDoubleBuffer(1);
+			DoubleBuffer xpos = BufferUtils.createDoubleBuffer(3);
+			DoubleBuffer ypos = BufferUtils.createDoubleBuffer(3);
 			glfwGetCursorPos(window, xpos, ypos);
+			//convert the glfw coordinate to our coordinate system
+			xpos.put(0, Math.min(Math.max(xpos.get(0), windowXOffset), WINDOW_WIDTH + windowXOffset));
+			ypos.put(0, Math.min(Math.max(ypos.get(0), windowYOffset), WINDOW_HEIGHT + windowYOffset));
+			//relative camera coordinates
+			xpos.put(1, getWidthScalar() * (xpos.get(0) - windowXOffset) + viewX);
+			ypos.put(1, getHeightScalar() * (ypos.get(0) - windowYOffset) + viewY);
+			//true window coordinates
+			xpos.put(2, xpos.get(0) - windowXOffset);
+			ypos.put(2, ypos.get(0) - windowYOffset);
 			if ( button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 				for (int u = 0; u < units.size(); u++) {
-					if(units.get(u).getOwnerId() == serverPlayerId && gamelogic.distance(xpos.get(0), ypos.get(0), units.get(u).getX(), units.get(u).getY()) <= 30){
+					if(units.get(u).getOwnerId() == serverPlayerId && gamelogic.distance(xpos.get(1), ypos.get(1), units.get(u).getX(), units.get(u).getY()) <= 30){
 						boolean selectUnit = true;
 						for (int i = 0; i < selectedUnitsId.size(); i++) {
 							if(selectedUnitsId.get(i) == units.get(u).getId()){
@@ -297,6 +327,7 @@ public class Game extends Listener{
 			
 			glEnable(GL_TEXTURE_2D);
 			
+			projectRelativeCameraCoordinates();
 			
 			//display tiles
 			for (int i = 0; i < tiles.length; i++) {
@@ -323,6 +354,11 @@ public class Game extends Listener{
 				}
 			}
 			
+			projectTrueWindowCoordinates();
+			gametextures.loadTexture(11);
+			model.render(new double[] {gameScreenWidth, 0, gameScreenWidth, WINDOW_HEIGHT, WINDOW_WIDTH, 0, WINDOW_WIDTH, WINDOW_HEIGHT});
+			
+			
 			
 			glDisable(GL_TEXTURE_2D);
 			
@@ -346,7 +382,7 @@ public class Game extends Listener{
 			glColor4f(0f, 0f, 0f, lightLevel);
 			
 			gametextures.loadTexture(-1);
-			model.render(new double[] {0, 0, 0, WINDOW_HEIGHT, WINDOW_WIDTH, 0, WINDOW_WIDTH, WINDOW_HEIGHT});
+			model.render(new double[] {0, 0, 0, gameScreenHeight, gameScreenWidth, 0, gameScreenWidth, gameScreenHeight});
 			
 			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 			
@@ -585,12 +621,101 @@ public class Game extends Listener{
 		return u;
 	}
 	
+	public void projectRelativeCameraCoordinates(){
+		glMatrixMode(GL_PROJECTION);
+        glLoadIdentity(); // Resets any previous projection matrices
+        glOrtho((-windowXOffset * getWidthScalar()) + viewX, viewX + cameraWidth + (windowXOffset * getWidthScalar()), viewY + cameraHeight + ((windowYOffset)* getHeightScalar()), viewY + ((-windowYOffset) * getHeightScalar()), 1, -1);
+        glMatrixMode(GL_MODELVIEW);
+	}
 	
 	public void projectTrueWindowCoordinates(){
 		glMatrixMode(GL_PROJECTION);
         glLoadIdentity(); // Resets any previous projection matrices
-        glOrtho(0, WINDOW_WIDTH, WINDOW_HEIGHT, 0, 1, -1);
+        glOrtho(-windowXOffset, WINDOW_WIDTH + windowXOffset, WINDOW_HEIGHT + windowYOffset, -windowYOffset, 1, -1);
         glMatrixMode(GL_MODELVIEW);
+	}
+	
+	public double getWidthScalar(){
+		return(double) cameraWidth / (double) WINDOW_WIDTH;
+	}
+	
+	public double getHeightScalar(){
+		return(double) cameraHeight / (double) WINDOW_HEIGHT;
+	}
+	
+	public void updateZoomLevel(boolean zoomOut){
+		DoubleBuffer xpos = BufferUtils.createDoubleBuffer(3);
+		DoubleBuffer ypos = BufferUtils.createDoubleBuffer(3);
+		glfwGetCursorPos(window, xpos, ypos);
+		//convert the glfw coordinate to our coordinate system
+		xpos.put(0, Math.min(Math.max(xpos.get(0), windowXOffset), WINDOW_WIDTH + windowXOffset));
+		ypos.put(0, Math.min(Math.max(ypos.get(0), windowYOffset), WINDOW_HEIGHT + windowYOffset));
+		//relative camera coordinates
+		xpos.put(1, getWidthScalar() * (xpos.get(0) - windowXOffset) + viewX);
+		ypos.put(1, getHeightScalar() * (ypos.get(0) - windowYOffset) + viewY);
+		//true window coordinates
+		xpos.put(2, xpos.get(0) - windowXOffset);
+		ypos.put(2, ypos.get(0) - windowYOffset);
+		
+		boolean mouseInFrame = false;
+		double oldX = xpos.get(1);
+		double oldY = ypos.get(1);
+		double xAxisDistance = 0;
+		double yAxisDistance = 0;
+		
+		if(xpos.get(2) > 0 && xpos.get(2) < gameScreenWidth && ypos.get(2) > 0 && ypos.get(2) < gameScreenHeight){
+			mouseInFrame = true;
+			xAxisDistance = xpos.get(2)/WINDOW_WIDTH;
+			yAxisDistance = ypos.get(2)/WINDOW_HEIGHT;
+		}
+		
+		int MIN_WIDTH = 0;
+		int MIN_HEIGHT = 0;
+		int MAX_WIDTH = 1280;
+		int MAX_HEIGHT = 1280;
+		
+		double zoomLevel = 4d/3d;
+		
+		if(zoomOut){
+			if(cameraWidth * zoomLevel <= MAX_WIDTH && cameraHeight * zoomLevel <= MAX_HEIGHT){
+				cameraWidth *= zoomLevel;
+				cameraHeight *= zoomLevel;
+				if(mouseInFrame){
+					viewX = oldX - cameraWidth * xAxisDistance;
+					viewY = oldY - cameraHeight * yAxisDistance;
+				}
+				else{
+					viewX -= cameraWidth / 6;
+					viewY -= cameraWidth / 6;
+				}
+				if(viewX + cameraWidth > gameScreenWidth){
+					viewX = gameScreenWidth - cameraWidth;
+				}
+				if(viewY + cameraHeight > gameScreenHeight){
+					viewY = gameScreenHeight - cameraHeight;
+				}
+				if(viewX < 0){
+					viewX = 0;
+				}
+				if(viewY < 0){
+					viewY = 0;
+				}
+			}
+		}
+		else{
+			if(cameraWidth / zoomLevel >= MIN_WIDTH && cameraHeight / zoomLevel >= MIN_HEIGHT){
+				cameraWidth /= zoomLevel;
+				cameraHeight /= zoomLevel;
+				if(mouseInFrame){
+					viewX = oldX - cameraWidth * xAxisDistance;
+					viewY = oldY - cameraHeight * yAxisDistance;
+				}
+				else{
+					viewX += cameraWidth / 4;
+					viewY += cameraHeight / 4;
+				}
+			}
+		}
 	}
 
 }

@@ -9,6 +9,7 @@ public class GameTextures {
 	final Texture redunit = new Texture("redunit2.png");
 	final Texture blueunit = new Texture("blueunit.png");
 	final Texture unitglow = new Texture("unitglow.png");
+	final Texture border = new Texture("border.png");
 	
 	public void loadTexture(int id){
 		switch (id) {
@@ -22,6 +23,9 @@ public class GameTextures {
 			break;
 		case 2:
 			blueunit.bind();
+			break;
+		case 11:
+			border.bind();
 			break;
 		default:
 			try {
