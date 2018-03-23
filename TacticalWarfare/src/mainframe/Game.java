@@ -48,6 +48,11 @@ public class Game extends Listener{
 	public int windowXOffset = 0;
 	public int windowYOffset = 0;
 	
+	boolean panLeft = false;
+    boolean panRight = false;
+    boolean panUp = false;
+    boolean panDown = false;
+    
 	int mapWidth;
 	int mapHeight;
 	int[][] map;
@@ -208,6 +213,45 @@ public class Game extends Listener{
 				if(gameState == 3){
 					updateZoomLevel(false);
 				}
+			if ( key == GLFW_KEY_LEFT && action == GLFW_PRESS )
+				panLeft = true;
+			if ( key == GLFW_KEY_LEFT && action == GLFW_RELEASE )
+				panLeft = false;
+			
+			if ( key == GLFW_KEY_RIGHT && action == GLFW_PRESS )
+				panRight = true;
+			if ( key == GLFW_KEY_RIGHT && action == GLFW_RELEASE )
+				panRight = false;
+			
+			if ( key == GLFW_KEY_UP && action == GLFW_PRESS )
+				panUp = true;
+			if ( key == GLFW_KEY_UP && action == GLFW_RELEASE )
+				panUp = false;
+			
+			if ( key == GLFW_KEY_DOWN && action == GLFW_PRESS )
+				panDown = true;
+			if ( key == GLFW_KEY_DOWN && action == GLFW_RELEASE )
+				panDown = false;
+			
+			if ( key == GLFW_KEY_A && action == GLFW_PRESS )
+				panLeft = true;
+			if ( key == GLFW_KEY_A && action == GLFW_RELEASE )
+				panLeft = false;
+			
+			if ( key == GLFW_KEY_D && action == GLFW_PRESS )
+				panRight = true;
+			if ( key == GLFW_KEY_D && action == GLFW_RELEASE )
+				panRight = false;
+			
+			if ( key == GLFW_KEY_W && action == GLFW_PRESS )
+				panUp = true;
+			if ( key == GLFW_KEY_W && action == GLFW_RELEASE )
+				panUp = false;
+			
+			if ( key == GLFW_KEY_S && action == GLFW_PRESS )
+				panDown = true;
+			if ( key == GLFW_KEY_S && action == GLFW_RELEASE )
+				panDown = false;
 		});
 		//mouse clicks
 		glfwSetMouseButtonCallback (window, (window, button, action, mods) -> {
@@ -385,6 +429,25 @@ public class Game extends Listener{
 			model.render(new double[] {0, 0, 0, gameScreenHeight, gameScreenWidth, 0, gameScreenWidth, gameScreenHeight});
 			
 			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+			
+			//move camera
+			if (panLeft) {
+				viewX = Math.max(0, viewX - cameraWidth / 30);
+//				shipTracking = false;
+			}
+			if (panRight) {
+				viewX = Math.min(gameScreenWidth - cameraWidth, viewX + cameraWidth / 30);
+				System.out.println(gameScreenWidth - cameraWidth + " " + viewX + cameraWidth / 30);
+//				shipTracking = false;
+			}
+			if (panDown) {
+				viewY = Math.max((int) (0 - 150 * getHeightScalar()), viewY - cameraHeight / 30);
+//				shipTracking = false;
+			}
+			if (panUp) {
+				viewY = Math.min(gameScreenHeight - cameraHeight, viewY + cameraHeight / 30);
+//				shipTracking = false;
+			}
 			
 			glfwSwapBuffers(window); // swap the color buffers
 		}
