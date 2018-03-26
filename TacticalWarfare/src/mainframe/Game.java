@@ -52,6 +52,7 @@ public class Game extends Listener{
     boolean panRight = false;
     boolean panUp = false;
     boolean panDown = false;
+    boolean unitTracking = false;
     
 	int mapWidth;
 	int mapHeight;
@@ -252,6 +253,9 @@ public class Game extends Listener{
 				panDown = true;
 			if ( key == GLFW_KEY_S && action == GLFW_RELEASE )
 				panDown = false;
+			if ( key == GLFW_KEY_T && action == GLFW_PRESS ) {
+				unitTracking = !unitTracking;
+			}
 		});
 		//mouse clicks
 		glfwSetMouseButtonCallback (window, (window, button, action, mods) -> {
@@ -285,7 +289,7 @@ public class Game extends Listener{
 				}
 			}
 			else if ( button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
-				moveOrder(xpos.get(0), ypos.get(0), selectedUnitsId);
+				moveOrder(xpos.get(1), ypos.get(1), selectedUnitsId);
 			}
 		});
 
@@ -430,23 +434,41 @@ public class Game extends Listener{
 			
 			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 			
+			if(unitTracking && selectedUnitsId.size() != 0) {
+				double avgX = 0;
+				double avgY = 0;
+				for (Unit u : units) {
+					for (int i = 0; i < selectedUnitsId.size(); i++) {
+						if(selectedUnitsId.get(i) == u.getId()){
+							avgX += u.getX();
+							avgY += u.getY();
+						}
+					}
+				}
+				avgX /= selectedUnitsId.size();
+				avgY /= selectedUnitsId.size();
+						
+				viewX = Math.min(gameScreenWidth - cameraWidth * (double) gameScreenWidth / (double) WINDOW_WIDTH,
+						Math.max(0, avgX - cameraWidth/2));
+				viewY = Math.min(gameScreenHeight - cameraHeight * (double) gameScreenHeight / (double) WINDOW_HEIGHT,
+						Math.max(0, avgY - cameraHeight/2));
+			}
 			//move camera
 			if (panLeft) {
 				viewX = Math.max(0, viewX - cameraWidth / 30);
-//				shipTracking = false;
+				unitTracking = false;
 			}
 			if (panRight) {
-				viewX = Math.min(gameScreenWidth - cameraWidth, viewX + cameraWidth / 30);
-				System.out.println(gameScreenWidth - cameraWidth + " " + viewX + cameraWidth / 30);
-//				shipTracking = false;
+				viewX = Math.min(gameScreenWidth - cameraWidth * (double) gameScreenWidth / (double) WINDOW_WIDTH, viewX + cameraWidth / 30);
+				unitTracking = false;
 			}
 			if (panDown) {
-				viewY = Math.max((int) (0 - 150 * getHeightScalar()), viewY - cameraHeight / 30);
-//				shipTracking = false;
+				viewY = Math.min(gameScreenHeight - cameraHeight * (double) gameScreenHeight / (double) WINDOW_HEIGHT, viewY + cameraHeight / 30);
+				unitTracking = false;
 			}
 			if (panUp) {
-				viewY = Math.min(gameScreenHeight - cameraHeight, viewY + cameraHeight / 30);
-//				shipTracking = false;
+				viewY = Math.max(0, viewY - cameraHeight / 30);
+				unitTracking = false;
 			}
 			
 			glfwSwapBuffers(window); // swap the color buffers
@@ -732,8 +754,8 @@ public class Game extends Listener{
 			yAxisDistance = ypos.get(2)/WINDOW_HEIGHT;
 		}
 		
-		int MIN_WIDTH = 0;
-		int MIN_HEIGHT = 0;
+		int MIN_WIDTH = 100;
+		int MIN_HEIGHT = 100;
 		int MAX_WIDTH = 1280;
 		int MAX_HEIGHT = 1280;
 		
