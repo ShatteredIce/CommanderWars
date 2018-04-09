@@ -18,6 +18,7 @@ public class Unit {
 	double angle;
 	double current_velocity = 0;
 	double base_velocity = 1;
+	double terrain_movement_modifier = 1;
 	double current_turn_speed = 0;
 	double max_turn_speed = 2;
 	
@@ -43,7 +44,7 @@ public class Unit {
 		angle += current_turn_speed;
 		angle = gamelogic.normalizeAngle(angle);
 		//set the center point if not offscreen
-		Point newcenter = new Point(center.X(), center.Y()+current_velocity);
+		Point newcenter = new Point(center.X(), center.Y()+(current_velocity/terrain_movement_modifier));
 		newcenter.rotatePoint(center.X(), center.Y(), angle);
 		center.setX(newcenter.X());
 		center.setY(newcenter.Y()); 
@@ -65,6 +66,10 @@ public class Unit {
 			outlineVertices[v_index] = outlinePoints[i].X();
 			outlineVertices[v_index+1] = outlinePoints[i].Y();	
 		}
+	}
+	
+	public void setTerrainMovement(int modifier) {
+		terrain_movement_modifier = modifier;
 	}
 	
 	public void update(){

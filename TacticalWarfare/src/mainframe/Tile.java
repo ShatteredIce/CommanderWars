@@ -63,11 +63,11 @@ public class Tile {
 	public int getMovement(){
 		switch (id) {
 		case 1:
-			return 20;
-		case 2 : case 4: case 5: case 6:
-			return 2;
-		case 3:
 			return 4;
+		case 2 : case 4: case 5: case 6:
+			return 1;
+		case 3:
+			return 2;
 		default:
 			return -1;
 		}

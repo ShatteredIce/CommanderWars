@@ -395,7 +395,9 @@ public class Game extends Listener{
 			}
 			
 			//display units
-			for (Unit u : units) {		
+			for (Unit u : units) {
+				int[] tile = currentTile(u.getX(),u.getY());
+				u.setTerrainMovement(tiles[tile[0]][tile[1]].getMovement());
 				u.update();
 				gametextures.loadTexture(u.getColor());
 				model.render(u.getVertices());
