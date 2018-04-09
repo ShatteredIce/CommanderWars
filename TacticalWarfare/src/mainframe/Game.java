@@ -19,6 +19,7 @@ import packets.PlayerInfo;
 import packets.TileInfo;
 import packets.UnitInfo;
 import packets.UnitPositions;
+import rendering.Bitmap;
 import rendering.GameTextures;
 import rendering.Model;
 
@@ -71,6 +72,9 @@ public class Game extends Listener{
 	boolean clientRecieved = false;
 	int gameState = 3;
 	
+	int red_score = 0;
+	int blue_score = 0;
+	
 //	Player debug = new Player(this, "debug", 0);
 	int serverPlayerId = 0;
 	
@@ -87,6 +91,7 @@ public class Game extends Listener{
 	
 	Random random = new Random();
 	
+	static Bitmap bitmap;
 	
 	public void run() throws IOException {
 		//create server
@@ -340,6 +345,8 @@ public class Game extends Listener{
 		
 		gametextures = new GameTextures();
 		
+		bitmap = new Bitmap();
+		
 		generateMap();
 //		loadUnits();
 		Player newplayer = new Player("derp", serverPlayerId);
@@ -359,7 +366,7 @@ public class Game extends Listener{
 		final double[] placeholder = {0, 0, 0, 0, 0, 0, 0, 0};
 		
 		Model model = new Model(placeholder, textureCoords, indices);
-		
+	
 		// Run the rendering loop until the user has attempted to close
 		// the window or has pressed the ESCAPE key.
 		while ( !glfwWindowShouldClose(window) ) {
@@ -404,9 +411,16 @@ public class Game extends Listener{
 			
 			projectTrueWindowCoordinates();
 			gametextures.loadTexture(11);
-			model.render(new double[] {gameScreenWidth, 0, gameScreenWidth, WINDOW_HEIGHT, WINDOW_WIDTH, 0, WINDOW_WIDTH, WINDOW_HEIGHT});
+			model.render(gameScreenWidth, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+			
+			gametextures.loadTexture(12);
+			model.render(gameScreenWidth + 10, 100, gameScreenWidth + 60, 150);
+			bitmap.drawNumber(gameScreenWidth + 75, 110, gameScreenWidth + 100, 140, red_score);
 			
 			
+			gametextures.loadTexture(13);
+			model.render(gameScreenWidth + 10, 160, gameScreenWidth + 60, 210);
+			bitmap.drawNumber(gameScreenWidth + 75, 170, gameScreenWidth + 100, 200, blue_score);
 			
 			glDisable(GL_TEXTURE_2D);
 			
@@ -425,6 +439,10 @@ public class Game extends Listener{
 			}
 			else {
 				lightLevel = 0.5f;
+			}
+			
+			if(tick % 50 == 0) {
+				red_score++;
 			}
 			
 			glColor4f(0f, 0f, 0f, lightLevel);

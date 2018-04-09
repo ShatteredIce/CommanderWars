@@ -6,10 +6,12 @@ import mainframe.GameException;
 
 public class GameTextures {
 	
-	final Texture redunit = new Texture("redunit2.png");
-	final Texture blueunit = new Texture("blueunit.png");
-	final Texture unitglow = new Texture("unitglow.png");
-	final Texture border = new Texture("border.png");
+	final static Texture redunit = new Texture("redunit2.png");
+	final static Texture blueunit = new Texture("blueunit.png");
+	final static Texture unitglow = new Texture("unitglow.png");
+	final static Texture border = new Texture("border.png");
+	final static Texture redflag = new Texture("redflag.png");
+	final static Texture blueflag = new Texture("blueflag.png");
 	
 	public void loadTexture(int id){
 		switch (id) {
@@ -26,6 +28,12 @@ public class GameTextures {
 			break;
 		case 11:
 			border.bind();
+			break;
+		case 12:
+			redflag.bind();
+			break;
+		case 13:
+			blueflag.bind();
 			break;
 		default:
 			try {

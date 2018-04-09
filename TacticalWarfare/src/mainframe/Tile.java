@@ -6,12 +6,12 @@ public class Tile {
 	static int tileWidth = 64;
 	static int tileHeight = 64;
 	
-	static Texture tex1 = new Texture("mountain.png");
-	static Texture tex2 = new Texture("grass.png");
-	static Texture tex3 = new Texture("forest.png");
-	static Texture tex4 = new Texture("neutralflag.png");
-	static Texture tex5 = new Texture("redflag.png");
-	static Texture tex6 = new Texture("blueflag.png");
+	final static Texture tex1 = new Texture("mountain.png");
+	final static Texture tex2 = new Texture("grass.png");
+	final static Texture tex3 = new Texture("forest.png");
+	final static Texture tex4 = new Texture("neutralflag.png");
+	final static Texture tex5 = new Texture("redflag.png");
+	final static Texture tex6 = new Texture("blueflag.png");
 	
 	double[] vertices = new double[8];
 	
