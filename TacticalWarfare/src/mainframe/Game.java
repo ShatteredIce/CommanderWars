@@ -72,6 +72,8 @@ public class Game extends Listener{
 	boolean clientRecieved = false;
 	int gameState = 3;
 	
+	int red_flags = 0;
+	int blue_flags = 0;
 	int red_score = 0;
 	int blue_score = 0;
 	
@@ -415,12 +417,12 @@ public class Game extends Listener{
 			
 			gametextures.loadTexture(12);
 			model.render(gameScreenWidth + 10, 100, gameScreenWidth + 60, 150);
-			bitmap.drawNumber(gameScreenWidth + 75, 110, gameScreenWidth + 100, 140, red_score);
+			bitmap.drawNumber(gameScreenWidth + 70, 110, gameScreenWidth + 95, 140, red_score);
 			
 			
 			gametextures.loadTexture(13);
 			model.render(gameScreenWidth + 10, 160, gameScreenWidth + 60, 210);
-			bitmap.drawNumber(gameScreenWidth + 75, 170, gameScreenWidth + 100, 200, blue_score);
+			bitmap.drawNumber(gameScreenWidth + 70, 170, gameScreenWidth + 95, 200, blue_score);
 			
 			glDisable(GL_TEXTURE_2D);
 			
@@ -442,7 +444,8 @@ public class Game extends Listener{
 			}
 			
 			if(tick % 50 == 0) {
-				red_score++;
+				red_score += red_flags;
+				blue_score += blue_flags;
 			}
 			
 			glColor4f(0f, 0f, 0f, lightLevel);
@@ -520,7 +523,20 @@ public class Game extends Listener{
 				}
 			}
 		}
+		//1 for red, 2 for blue
 		if(capturingColor != 0) {
+			if(tiles[tileX][tileY].getId() == 5) {
+				red_flags--;
+			}
+			else if(tiles[tileX][tileY].getId() == 6) {
+				blue_flags--;
+			}
+			if(capturingColor == 1) {
+				red_flags++;
+			}
+			else if(capturingColor == 2) {
+				blue_flags++;
+			}
 			tiles[tileX][tileY].setId(capturingColor + 4);
 			map[tileX][tileY] = capturingColor + 4;
 			server.sendToAllTCP(new TileInfo(tileX, tileY, capturingColor + 4));
