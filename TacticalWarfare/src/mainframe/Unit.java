@@ -23,6 +23,8 @@ public class Unit {
 	double max_turn_speed = 2;
 	int cooldown = 20;
 	int current_cooldown = 0;
+	int max_health = 10;
+	int health = 10;
 	
 	Point locationTarget = null;
 	ArrayList<Point> tilePath = new ArrayList<>();
@@ -200,6 +202,10 @@ public class Unit {
 	
 	public int getCurrentCooldown() {
 		return current_cooldown;
+	}
+	
+	public int getHealth() {
+		return health;
 	}
 
 }
