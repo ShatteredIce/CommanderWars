@@ -67,9 +67,12 @@ public class Game extends Listener{
 	
 	ArrayList<Player> players = new ArrayList<>();
 	ArrayList<Unit> units = new ArrayList<>();
+	ArrayList<Projectile> projectiles = new ArrayList<>();
 	ArrayList<Integer> selectedUnitsId = new ArrayList<>();
 	
 	boolean clientRecieved = false;
+	boolean spacePressed = false;
+	
 	int gameState = 3;
 	
 	int red_flags = 0;
@@ -263,6 +266,8 @@ public class Game extends Listener{
 			if ( key == GLFW_KEY_T && action == GLFW_PRESS ) {
 				unitTracking = !unitTracking;
 			}
+			if ( key == GLFW_KEY_SPACE && action == GLFW_PRESS )
+				fireProjectile();
 		});
 		//mouse clicks
 		glfwSetMouseButtonCallback (window, (window, button, action, mods) -> {
@@ -401,6 +406,20 @@ public class Game extends Listener{
 				u.update();
 				gametextures.loadTexture(u.getColor());
 				model.render(u.getVertices());
+			}
+			
+			//display projectiles
+			for (int p = 0; p < projectiles.size(); p++) {
+				Projectile current = projectiles.get(p);
+				if(current.setPoints() == false){
+					projectiles.remove(p);
+					p--;
+				}
+				else {
+					gametextures.loadTexture(current.getTexId());
+					model.render(current.getVertices());
+					
+				}
 			}
 			
 			//display glow on selected units
@@ -543,6 +562,20 @@ public class Game extends Listener{
 			map[tileX][tileY] = capturingColor + 4;
 			server.sendToAllTCP(new TileInfo(tileX, tileY, capturingColor + 4));
 			
+		}
+	}
+	
+	public void fireProjectile() {
+		if(selectedUnitsId.isEmpty()) {
+			return;
+		}
+		for (Unit u : units) {
+			for (int i = 0; i < selectedUnitsId.size(); i++) {
+				if(selectedUnitsId.get(i) == u.getId() && u.getCurrentCooldown() == 0){
+					projectiles.add(new Projectile(u, u.getTeam(), u.getX(), u.getY(), u.getAngle(), 10, 1, 60, 20));
+					u.triggerCooldown();
+				}
+			}
 		}
 	}
 	

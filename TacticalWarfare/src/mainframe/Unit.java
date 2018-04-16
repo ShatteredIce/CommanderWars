@@ -17,10 +17,12 @@ public class Unit {
 	String team;
 	double angle;
 	double current_velocity = 0;
-	double base_velocity = 1;
+	double base_velocity = 10;
 	double terrain_movement_modifier = 1;
 	double current_turn_speed = 0;
 	double max_turn_speed = 2;
+	int cooldown = 20;
+	int current_cooldown = 0;
 	
 	Point locationTarget = null;
 	ArrayList<Point> tilePath = new ArrayList<>();
@@ -75,6 +77,13 @@ public class Unit {
 	public void update(){
 		moveToLocation();
 		setPoints();
+		if(current_cooldown > 0) {
+			current_cooldown--;
+		}
+	}
+	
+	public void triggerCooldown() {
+		current_cooldown = cooldown;
 	}
 	
 	public void moveToLocation(){
@@ -187,6 +196,10 @@ public class Unit {
 	
 	public int getColor() {
 		return color;
+	}
+	
+	public int getCurrentCooldown() {
+		return current_cooldown;
 	}
 
 }
