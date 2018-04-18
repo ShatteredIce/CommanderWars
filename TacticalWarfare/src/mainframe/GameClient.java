@@ -14,6 +14,8 @@ import packets.MapData;
 import packets.Message;
 import packets.MouseClick;
 import packets.PlayerInfo;
+import packets.ProjectileInfo;
+import packets.ProjectilePositions;
 import packets.TileInfo;
 import packets.UnitInfo;
 import packets.UnitPositions;
@@ -45,6 +47,7 @@ public class GameClient extends Listener{
 	
 	ArrayList<Player> players = new ArrayList<>();
 	ArrayList<UnitInfo> units = new ArrayList<>();
+	ArrayList<ProjectileInfo> projectiles = new ArrayList<>();
 	ArrayList<Integer> selectedUnitsId = new ArrayList<>();
 	
 	int myPlayerId = -1;
@@ -72,8 +75,10 @@ public class GameClient extends Listener{
 		client.getKryo().register(int[].class);
 		client.getKryo().register(int[][].class);
 		client.getKryo().register(UnitPositions.class);
+		client.getKryo().register(ProjectilePositions.class);
 		client.getKryo().register(PlayerInfo.class);
 		client.getKryo().register(UnitInfo.class);
+		client.getKryo().register(ProjectileInfo.class);
 		client.getKryo().register(MouseClick.class);
 		client.getKryo().register(MapData.class);
 		client.getKryo().register(Message.class);
@@ -210,6 +215,10 @@ public class GameClient extends Listener{
 			UnitPositions packet = (UnitPositions) obj;
 			units = packet.getUnitdata();
 		}
+		else if(obj instanceof ProjectilePositions){
+			ProjectilePositions packet = (ProjectilePositions) obj;
+			projectiles = packet.getProjectiledata();
+		}
 		else if(obj instanceof MapData){
 			MapData packet = (MapData) obj;
 			map = packet.getData();
@@ -292,6 +301,12 @@ public class GameClient extends Listener{
 						model.render(u.getOutlineVertices());
 					}
 				}
+			}
+			
+			//display projectiles
+			for (ProjectileInfo p : projectiles) {
+				gametextures.loadTexture(p.getColor());
+				model.render(p.getVertices());
 			}
 			
 			glDisable(GL_TEXTURE_2D);

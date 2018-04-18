@@ -74,13 +74,28 @@ public class Projectile {
 		return true;
 	}
 	
-	public int getTexId() {
+	public int getColor() { //color is texture id
 		return texid;
+	}
+	
+	public String getTeam(){
+		return team;
+	}
+	
+	public double getAngle(){
+		return angle;
 	}
 	
 	public double[] getVertices(){
 		return vertices;
 	}
 	
-
+	public double getX(){
+		return center.X();
+	}
+	
+	public double getY(){
+		return center.Y();
+	}
+	
 }

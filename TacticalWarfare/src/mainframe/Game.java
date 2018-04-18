@@ -16,6 +16,8 @@ import packets.MapData;
 import packets.Message;
 import packets.MouseClick;
 import packets.PlayerInfo;
+import packets.ProjectileInfo;
+import packets.ProjectilePositions;
 import packets.TileInfo;
 import packets.UnitInfo;
 import packets.UnitPositions;
@@ -107,8 +109,10 @@ public class Game extends Listener{
 		server.getKryo().register(int[].class);
 		server.getKryo().register(int[][].class);
 		server.getKryo().register(UnitPositions.class);
+		server.getKryo().register(ProjectilePositions.class);
 		server.getKryo().register(PlayerInfo.class);
 		server.getKryo().register(UnitInfo.class);
+		server.getKryo().register(ProjectileInfo.class);
 		server.getKryo().register(MouseClick.class);
 		server.getKryo().register(MapData.class);
 		server.getKryo().register(Message.class);
@@ -160,6 +164,7 @@ public class Game extends Listener{
 	public void updateClients(){
 		for (int i = 0; i < players.size(); i++) {
 			server.sendToAllTCP(new UnitPositions(units));
+			server.sendToAllTCP(new ProjectilePositions(projectiles));
 		}
 	}
 	
@@ -416,7 +421,7 @@ public class Game extends Listener{
 					p--;
 				}
 				else {
-					gametextures.loadTexture(current.getTexId());
+					gametextures.loadTexture(current.getColor());
 					model.render(current.getVertices());
 					
 				}
@@ -572,7 +577,7 @@ public class Game extends Listener{
 		for (Unit u : units) {
 			for (int i = 0; i < selectedUnitsId.size(); i++) {
 				if(selectedUnitsId.get(i) == u.getId() && u.getCurrentCooldown() == 0){
-					projectiles.add(new Projectile(u, u.getTeam(), u.getX(), u.getY(), u.getAngle(), 10, 1, 60, 20));
+					projectiles.add(new Projectile(u, u.getTeam(), u.getX(), u.getY(), u.getAngle(), 6, 1, 40, 20));
 					u.triggerCooldown();
 				}
 			}
