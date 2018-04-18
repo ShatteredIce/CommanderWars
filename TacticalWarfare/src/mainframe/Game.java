@@ -12,6 +12,7 @@ import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 import com.esotericsoftware.kryonet.Server;
 
+import packets.KeyPress;
 import packets.MapData;
 import packets.Message;
 import packets.MouseClick;
@@ -114,6 +115,7 @@ public class Game extends Listener{
 		server.getKryo().register(UnitInfo.class);
 		server.getKryo().register(ProjectileInfo.class);
 		server.getKryo().register(MouseClick.class);
+		server.getKryo().register(KeyPress.class);
 		server.getKryo().register(MapData.class);
 		server.getKryo().register(Message.class);
 		server.getKryo().register(TileInfo.class);
@@ -152,7 +154,7 @@ public class Game extends Listener{
 		Player newplayer = new Player("derp", c.getID());
 		players.add(newplayer);
 		server.sendToAllTCP(new PlayerInfo(1, newplayer.getTeam(), newplayer.getId()));
-		String unitTeam = "derp";
+		String unitTeam = "blue";
 		double unitX = 100*(random.nextInt(6) + 1);
 		double unitY = 100*(random.nextInt(6) + 1);
 		double unitAngle = random.nextInt(360);
@@ -174,6 +176,12 @@ public class Game extends Listener{
 		if(obj instanceof MouseClick){
 			MouseClick click = (MouseClick) obj;
 			moveOrder(click.getX(), click.getY(), click.getUnitIds());
+		}
+		else if(obj instanceof KeyPress) {
+			KeyPress key = (KeyPress) obj;
+			if(key.getKey() == GLFW_KEY_SPACE) {
+				fireProjectile(key.getUnitIds());
+			}
 		}
 	}
 	
@@ -272,7 +280,7 @@ public class Game extends Listener{
 				unitTracking = !unitTracking;
 			}
 			if ( key == GLFW_KEY_SPACE && action == GLFW_PRESS )
-				fireProjectile();
+				fireProjectile(selectedUnitsId);
 		});
 		//mouse clicks
 		glfwSetMouseButtonCallback (window, (window, button, action, mods) -> {
@@ -364,7 +372,7 @@ public class Game extends Listener{
 		Player newplayer = new Player("derp", serverPlayerId);
 		players.add(newplayer);
 		server.sendToAllTCP(new PlayerInfo(1, newplayer.getTeam(), newplayer.getId()));
-		String unitTeam = "derp";
+		String unitTeam = "red";
 //		double unitX = 100*(random.nextInt(6) + 1);
 //		double unitY = 100*(random.nextInt(6) + 1);
 		double unitAngle = random.nextInt(360);
@@ -481,6 +489,9 @@ public class Game extends Listener{
 			
 			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 			
+			checkProjectiles();
+			respawnUnits();
+			
 			if(unitTracking && selectedUnitsId.size() != 0) {
 				double avgX = 0;
 				double avgY = 0;
@@ -570,13 +581,13 @@ public class Game extends Listener{
 		}
 	}
 	
-	public void fireProjectile() {
-		if(selectedUnitsId.isEmpty()) {
+	public void fireProjectile(ArrayList<Integer> firingUnits) {
+		if(firingUnits.isEmpty()) {
 			return;
 		}
 		for (Unit u : units) {
-			for (int i = 0; i < selectedUnitsId.size(); i++) {
-				if(selectedUnitsId.get(i) == u.getId() && u.getCurrentCooldown() == 0){
+			for (int i = 0; i < firingUnits.size(); i++) {
+				if(firingUnits.get(i) == u.getId() && u.getCurrentCooldown() == 0){
 					projectiles.add(new Projectile(u, u.getTeam(), u.getX(), u.getY(), u.getAngle(), 6, 1, 40, 20));
 					u.triggerCooldown();
 				}
@@ -772,6 +783,40 @@ public class Game extends Listener{
 			}
 		}
 		return tilePos;
+	}
+	
+	//check projectile collisions
+	public void checkProjectiles() {
+		for (int i = 0; i < projectiles.size(); i++) {
+    		Projectile p = projectiles.get(i);
+			for (int j = 0; j < units.size(); j++) {
+				Unit u = units.get(j);
+				if(gamelogic.polygon_intersection(p.getPoints(), u.getPoints()) && !(p.getTeam().equals(u.getTeam()))){
+					u.setHealth(u.getHealth() - p.getDamage());
+					//update score for kill
+					if(u.getHealth() <= 0) {
+						if(p.getTeam().equals("red")) {
+							red_score += 100;
+						}
+						else if(p.getTeam().equals("blue")) {
+							blue_score += 100;
+						}
+					}
+					projectiles.remove(p);
+					i--;
+					break;
+				}
+			}
+		}
+	}
+	
+	public void respawnUnits() {
+		for(Unit u : units) {
+			if(u.getHealth() <= 0) {
+				u.setPosition(100*(random.nextInt(6) + 1), 100*(random.nextInt(6) + 1), random.nextInt(360));
+				u.setHealth(u.getMaxHealth());
+			}
+		}
 	}
 	
 	public Unit createUnit(int newownerid, String newteam, double newx, double newy, double newangle, int newcolor){

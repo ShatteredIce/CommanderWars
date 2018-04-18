@@ -13,12 +13,12 @@ public class Projectile {
 	Point center;
 	double angle;
 	double speed;
-	double damage;
+	int damage;
 	double lifetime;
 	double current_lifetime = 0;
 	int texid;
 	
-	public Projectile(Unit newowner, String myteam, double spawnx, double spawny, double newangle, double newspeed, double newdamage, double newlifetime, int newtexid) {
+	public Projectile(Unit newowner, String myteam, double spawnx, double spawny, double newangle, double newspeed, int newdamage, double newlifetime, int newtexid) {
 		owner = newowner;
 		team = myteam;
 		center = new Point(spawnx, spawny);
@@ -96,6 +96,14 @@ public class Projectile {
 	
 	public double getY(){
 		return center.Y();
+	}
+	
+	public int getDamage() {
+		return damage;
+	}
+	
+	public Point[] getPoints() {
+		return points;
 	}
 	
 }

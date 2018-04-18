@@ -10,6 +10,7 @@ import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
 
+import packets.KeyPress;
 import packets.MapData;
 import packets.Message;
 import packets.MouseClick;
@@ -80,6 +81,7 @@ public class GameClient extends Listener{
 		client.getKryo().register(UnitInfo.class);
 		client.getKryo().register(ProjectileInfo.class);
 		client.getKryo().register(MouseClick.class);
+		client.getKryo().register(KeyPress.class);
 		client.getKryo().register(MapData.class);
 		client.getKryo().register(Message.class);
 		client.getKryo().register(TileInfo.class);
@@ -131,6 +133,8 @@ public class GameClient extends Listener{
 		glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
 			if ( key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE )
 				glfwSetWindowShouldClose(window, true); // We will detect this in the rendering loop
+			if ( key == GLFW_KEY_SPACE && action == GLFW_PRESS )
+				client.sendTCP(new KeyPress(GLFW_KEY_SPACE, selectedUnitsId));
 		});
 		
 		glfwSetMouseButtonCallback (window, (window, button, action, mods) -> {

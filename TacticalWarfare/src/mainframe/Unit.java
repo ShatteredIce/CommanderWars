@@ -204,8 +204,23 @@ public class Unit {
 		return current_cooldown;
 	}
 	
+	public void setHealth(int newhealth) {
+		health = newhealth;
+//		if(health > max_health) {
+//			health = max_health;
+//		}
+	}
+	
 	public int getHealth() {
 		return health;
+	}
+	
+	public int getMaxHealth() {
+		return max_health;
+	}
+	
+	public Point[] getPoints() {
+		return points;
 	}
 
 }
