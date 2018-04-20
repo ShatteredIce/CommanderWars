@@ -87,6 +87,7 @@ public class Game extends Listener{
 	boolean aPressed = false;
 	boolean wPressed = false;
 	boolean dPressed = false;
+	boolean sPressed = false;
 	
 //	Player debug = new Player(this, "debug", 0);
 	int serverPlayerId = 0;
@@ -194,7 +195,7 @@ public class Game extends Listener{
 		}
 		else if(obj instanceof UnitMovement) {
 			UnitMovement data = (UnitMovement) obj;
-			moveUnitsManual(data.getUnitIds(), data.getLeft(), data.getUp(), data.getRight());
+			moveUnitsManual(data.getUnitIds(), data.getLeft(), data.getUp(), data.getRight(), data.getDown());
 		}
 	}
 	
@@ -284,8 +285,11 @@ public class Game extends Listener{
 				wPressed = true;
 			if ( key == GLFW_KEY_W && action == GLFW_RELEASE )
 				wPressed = false;
-			
 			if ( key == GLFW_KEY_S && action == GLFW_PRESS )
+				sPressed = true;
+			if ( key == GLFW_KEY_S && action == GLFW_RELEASE )
+				sPressed = false;
+			if ( key == GLFW_KEY_Z && action == GLFW_PRESS )
 				setMine(selectedUnitsId);
 			if ( key == GLFW_KEY_T && action == GLFW_PRESS ) {
 				unitTracking = !unitTracking;
@@ -526,7 +530,7 @@ public class Game extends Listener{
 						Math.max(0, avgY - cameraHeight/2));
 			}
 			
-			moveUnitsManual(selectedUnitsId, aPressed, wPressed, dPressed);
+			moveUnitsManual(selectedUnitsId, aPressed, wPressed, dPressed, sPressed);
 			
 			//move camera
 			if (panLeft) {
@@ -598,17 +602,20 @@ public class Game extends Listener{
 		}
 	}
 	
-	public void moveUnitsManual(ArrayList<Integer> movingUnits, boolean left, boolean up, boolean right) {
+	public void moveUnitsManual(ArrayList<Integer> movingUnits, boolean left, boolean up, boolean right, boolean down) {
 		if(movingUnits.isEmpty()) {
 			return;
 		}
 		for (Unit u : units) {
 			for (int i = 0; i < movingUnits.size(); i++) {
 				if(movingUnits.get(i) == u.getId()){
-					if(left || up || right) {
+					if(left || up || right || down) {
 						u.clearMovement();
 						if(up) {
 							u.moveForward();
+						}
+						else if(down) {
+							u.moveBackwards();
 						}
 						if(left) {
 							u.turnLeft();
@@ -648,7 +655,7 @@ public class Game extends Listener{
 			for (int i = 0; i < firingUnits.size(); i++) {
 				if(firingUnits.get(i) == u.getId() && u.getNumMines() < 4){
 					u.setNumMines(u.getNumMines() + 1);
-					projectiles.add(new Projectile(u, u.getTeam(), u.getX(), u.getY(), 0, 0, 10, 1000, 21));
+					projectiles.add(new Projectile(u, u.getTeam(), u.getX(), u.getY(), 0, 0, 5, 1000, 21));
 				}
 			}
 		}
@@ -848,6 +855,9 @@ public class Game extends Listener{
 	public void checkProjectiles() {
 		for (int i = 0; i < projectiles.size(); i++) {
     		Projectile p = projectiles.get(i);
+    		if(p.getColor() == 21) {
+    			return;
+    		}
 			for (int j = 0; j < units.size(); j++) {
 				Unit u = units.get(j);
 				if(gamelogic.polygon_intersection(p.getPoints(), u.getPoints()) && !(p.getTeam().equals(u.getTeam()))){

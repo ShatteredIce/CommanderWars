@@ -80,11 +80,14 @@ public class Projectile {
 			destroy();
 			return false;
 		}
+		if(texid == 21 && current_lifetime > 100) { //arm mines
+			texid = 22;
+		}
 		return true;
 	}
 	
 	public void destroy() {
-		if(texid == 21) {
+		if(texid == 22) {
 			owner.setNumMines(owner.getNumMines() - 1);
 		}
 	}

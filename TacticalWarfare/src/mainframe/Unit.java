@@ -17,7 +17,7 @@ public class Unit {
 	String team;
 	double angle;
 	double current_velocity = 0;
-	double base_velocity = 10;
+	double base_velocity = 4;
 	double terrain_movement_modifier = 1;
 	double current_turn_speed = 0;
 	double max_turn_speed = 2;
@@ -134,6 +134,10 @@ public class Unit {
 	
 	public void moveForward() {
 		current_velocity = base_velocity;
+	}
+	
+	public void moveBackwards() {
+		current_velocity = -(base_velocity/4);
 	}
 	
 	public void setLocationTarget(double x, double y){

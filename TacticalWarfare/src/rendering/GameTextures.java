@@ -13,6 +13,7 @@ public class GameTextures {
 	final static Texture redflag = new Texture("redflag.png");
 	final static Texture blueflag = new Texture("blueflag.png");
 	final static Texture projectile = new Texture("projectile_test.png");
+	final static Texture mine_unarmed = new Texture("mine_unarmed.png");
 	final static Texture mine = new Texture("mine.png");
 	
 	public void loadTexture(int id){
@@ -41,6 +42,9 @@ public class GameTextures {
 			projectile.bind();
 			break;
 		case 21:
+			mine_unarmed.bind();
+			break;
+		case 22:
 			mine.bind();
 			break;
 		default:
