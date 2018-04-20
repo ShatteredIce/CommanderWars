@@ -21,6 +21,7 @@ import packets.ProjectileInfo;
 import packets.ProjectilePositions;
 import packets.TileInfo;
 import packets.UnitInfo;
+import packets.UnitMovement;
 import packets.UnitPositions;
 import rendering.Bitmap;
 import rendering.GameTextures;
@@ -83,6 +84,10 @@ public class Game extends Listener{
 	int red_score = 0;
 	int blue_score = 0;
 	
+	boolean aPressed = false;
+	boolean wPressed = false;
+	boolean dPressed = false;
+	
 //	Player debug = new Player(this, "debug", 0);
 	int serverPlayerId = 0;
 	
@@ -119,6 +124,7 @@ public class Game extends Listener{
 		server.getKryo().register(MapData.class);
 		server.getKryo().register(Message.class);
 		server.getKryo().register(TileInfo.class);
+		server.getKryo().register(UnitMovement.class);
 		server.bind(tcpPort, udpPort);
 		
 		//start server
@@ -182,9 +188,13 @@ public class Game extends Listener{
 			if(key.getKey() == GLFW_KEY_SPACE) {
 				fireProjectile(key.getUnitIds());
 			}
-			else if(key.getKey() == GLFW_KEY_Z) {
+			else if(key.getKey() == GLFW_KEY_S) {
 				setMine(key.getUnitIds());
 			}
+		}
+		else if(obj instanceof UnitMovement) {
+			UnitMovement data = (UnitMovement) obj;
+			moveUnitsManual(data.getUnitIds(), data.getLeft(), data.getUp(), data.getRight());
 		}
 	}
 	
@@ -261,31 +271,27 @@ public class Game extends Listener{
 				panDown = false;
 			
 			if ( key == GLFW_KEY_A && action == GLFW_PRESS )
-				panLeft = true;
+				aPressed = true;
 			if ( key == GLFW_KEY_A && action == GLFW_RELEASE )
-				panLeft = false;
+				aPressed = false;
 			
 			if ( key == GLFW_KEY_D && action == GLFW_PRESS )
-				panRight = true;
+				dPressed = true;
 			if ( key == GLFW_KEY_D && action == GLFW_RELEASE )
-				panRight = false;
+				dPressed = false;
 			
 			if ( key == GLFW_KEY_W && action == GLFW_PRESS )
-				panUp = true;
+				wPressed = true;
 			if ( key == GLFW_KEY_W && action == GLFW_RELEASE )
-				panUp = false;
+				wPressed = false;
 			
 			if ( key == GLFW_KEY_S && action == GLFW_PRESS )
-				panDown = true;
-			if ( key == GLFW_KEY_S && action == GLFW_RELEASE )
-				panDown = false;
+				setMine(selectedUnitsId);
 			if ( key == GLFW_KEY_T && action == GLFW_PRESS ) {
 				unitTracking = !unitTracking;
 			}
 			if ( key == GLFW_KEY_SPACE && action == GLFW_PRESS )
 				fireProjectile(selectedUnitsId);
-			if ( key == GLFW_KEY_Z && action == GLFW_PRESS )
-				setMine(selectedUnitsId);
 		});
 		//mouse clicks
 		glfwSetMouseButtonCallback (window, (window, button, action, mods) -> {
@@ -519,6 +525,9 @@ public class Game extends Listener{
 				viewY = Math.min(gameScreenHeight - cameraHeight * (double) gameScreenHeight / (double) WINDOW_HEIGHT,
 						Math.max(0, avgY - cameraHeight/2));
 			}
+			
+			moveUnitsManual(selectedUnitsId, aPressed, wPressed, dPressed);
+			
 			//move camera
 			if (panLeft) {
 				viewX = Math.max(0, viewX - cameraWidth / 30);
@@ -586,6 +595,34 @@ public class Game extends Listener{
 			map[tileX][tileY] = capturingColor + 4;
 			server.sendToAllTCP(new TileInfo(tileX, tileY, capturingColor + 4));
 			
+		}
+	}
+	
+	public void moveUnitsManual(ArrayList<Integer> movingUnits, boolean left, boolean up, boolean right) {
+		if(movingUnits.isEmpty()) {
+			return;
+		}
+		for (Unit u : units) {
+			for (int i = 0; i < movingUnits.size(); i++) {
+				if(movingUnits.get(i) == u.getId()){
+					if(left || up || right) {
+						u.clearMovement();
+						if(up) {
+							u.moveForward();
+						}
+						if(left) {
+							u.turnLeft();
+						}
+						else if(right) {
+							u.turnRight();
+						}
+						
+					}
+					else if(u.isIdle()) {
+						u.clearMovement();
+					}
+				}
+			}
 		}
 	}
 	

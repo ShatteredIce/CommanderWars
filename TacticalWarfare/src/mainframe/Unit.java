@@ -124,8 +124,27 @@ public class Unit {
 		}
 	}
 	
+	public void turnLeft() {
+		current_turn_speed = -max_turn_speed;
+	}
+	
+	public void turnRight() {
+		current_turn_speed = max_turn_speed;
+	}
+	
+	public void moveForward() {
+		current_velocity = base_velocity;
+	}
+	
 	public void setLocationTarget(double x, double y){
 		locationTarget = new Point(x, y);
+	}
+	
+	public boolean isIdle() {
+		if(locationTarget == null && tilePath.isEmpty()) {
+			return true;
+		}
+		return false;
 	}
 	
 	public void setLocationTarget(ArrayList<Point> path){
@@ -139,11 +158,15 @@ public class Unit {
 	
 	public void respawn() {
 		health = max_health;
+		clearMovement();
+		current_cooldown = 0;
+	}
+	
+	public void clearMovement() {
 		locationTarget = null;
 		tilePath.clear();
 		current_velocity = 0;
 		current_turn_speed = 0;
-		current_cooldown = 0;
 	}
 	
 	public void setPosition(double newx, double newy, double newangle){

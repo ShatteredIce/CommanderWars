@@ -19,6 +19,7 @@ import packets.ProjectileInfo;
 import packets.ProjectilePositions;
 import packets.TileInfo;
 import packets.UnitInfo;
+import packets.UnitMovement;
 import packets.UnitPositions;
 import rendering.GameTextures;
 import rendering.Model;
@@ -52,6 +53,11 @@ public class GameClient extends Listener{
 	ArrayList<Integer> selectedUnitsId = new ArrayList<>();
 	
 	int myPlayerId = -1;
+	
+	boolean aPressed;
+	boolean wPressed;
+	boolean dPressed;
+	boolean sentMovement = true;
 		
 	// The window handle
 	private long window;
@@ -85,6 +91,7 @@ public class GameClient extends Listener{
 		client.getKryo().register(MapData.class);
 		client.getKryo().register(Message.class);
 		client.getKryo().register(TileInfo.class);
+		client.getKryo().register(UnitMovement.class);
 		
 		//start the client
 		client.start();
@@ -135,8 +142,32 @@ public class GameClient extends Listener{
 				glfwSetWindowShouldClose(window, true); // We will detect this in the rendering loop
 			if ( key == GLFW_KEY_SPACE && action == GLFW_PRESS )
 				client.sendTCP(new KeyPress(GLFW_KEY_SPACE, selectedUnitsId));
-			if ( key == GLFW_KEY_Z && action == GLFW_PRESS )
-				client.sendTCP(new KeyPress(GLFW_KEY_Z, selectedUnitsId));
+			if ( key == GLFW_KEY_S && action == GLFW_PRESS )
+				client.sendTCP(new KeyPress(GLFW_KEY_S, selectedUnitsId));
+			if ( key == GLFW_KEY_A && action == GLFW_PRESS) {
+				aPressed = true;
+				sentMovement = false;
+			}
+			if ( key == GLFW_KEY_A && action == GLFW_RELEASE) {
+				aPressed = false;
+				sentMovement = false;
+			}
+			if ( key == GLFW_KEY_W && action == GLFW_PRESS) {
+				wPressed = true;
+				sentMovement = false;
+			}
+			if ( key == GLFW_KEY_W && action == GLFW_RELEASE) {
+				wPressed = false;
+				sentMovement = false;
+			}
+			if ( key == GLFW_KEY_D && action == GLFW_PRESS) {
+				dPressed = true;
+				sentMovement = false;
+			}
+			if ( key == GLFW_KEY_D && action == GLFW_RELEASE) {
+				dPressed = false;
+				sentMovement = false;
+			}
 		});
 		
 		glfwSetMouseButtonCallback (window, (window, button, action, mods) -> {
@@ -315,6 +346,12 @@ public class GameClient extends Listener{
 			}
 			
 			glDisable(GL_TEXTURE_2D);
+			
+			//send server movement 
+			if(sentMovement == false) {
+				client.sendTCP(new UnitMovement(selectedUnitsId, aPressed, wPressed, dPressed));
+				sentMovement = true;
+			}
 			
 			tick++;
 			if(tick > ticksPerDay) {
