@@ -135,6 +135,8 @@ public class GameClient extends Listener{
 				glfwSetWindowShouldClose(window, true); // We will detect this in the rendering loop
 			if ( key == GLFW_KEY_SPACE && action == GLFW_PRESS )
 				client.sendTCP(new KeyPress(GLFW_KEY_SPACE, selectedUnitsId));
+			if ( key == GLFW_KEY_Z && action == GLFW_PRESS )
+				client.sendTCP(new KeyPress(GLFW_KEY_Z, selectedUnitsId));
 		});
 		
 		glfwSetMouseButtonCallback (window, (window, button, action, mods) -> {
@@ -290,6 +292,11 @@ public class GameClient extends Listener{
 				}
 			}
 			
+			//display projectiles
+			for (ProjectileInfo p : projectiles) {
+				gametextures.loadTexture(p.getColor());
+				model.render(p.getVertices());
+			}
 
 			//display units
 			for (UnitInfo u : units) {
@@ -305,12 +312,6 @@ public class GameClient extends Listener{
 						model.render(u.getOutlineVertices());
 					}
 				}
-			}
-			
-			//display projectiles
-			for (ProjectileInfo p : projectiles) {
-				gametextures.loadTexture(p.getColor());
-				model.render(p.getVertices());
 			}
 			
 			glDisable(GL_TEXTURE_2D);

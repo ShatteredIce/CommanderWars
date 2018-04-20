@@ -182,6 +182,9 @@ public class Game extends Listener{
 			if(key.getKey() == GLFW_KEY_SPACE) {
 				fireProjectile(key.getUnitIds());
 			}
+			else if(key.getKey() == GLFW_KEY_Z) {
+				setMine(key.getUnitIds());
+			}
 		}
 	}
 	
@@ -281,6 +284,8 @@ public class Game extends Listener{
 			}
 			if ( key == GLFW_KEY_SPACE && action == GLFW_PRESS )
 				fireProjectile(selectedUnitsId);
+			if ( key == GLFW_KEY_Z && action == GLFW_PRESS )
+				setMine(selectedUnitsId);
 		});
 		//mouse clicks
 		glfwSetMouseButtonCallback (window, (window, button, action, mods) -> {
@@ -412,15 +417,6 @@ public class Game extends Listener{
 				}
 			}
 			
-			//display units
-			for (Unit u : units) {
-				int[] tile = currentTile(u.getX(),u.getY());
-				u.setTerrainMovement(tiles[tile[0]][tile[1]].getMovement());
-				u.update();
-				gametextures.loadTexture(u.getColor());
-				model.render(u.getVertices());
-			}
-			
 			//display projectiles
 			for (int p = 0; p < projectiles.size(); p++) {
 				Projectile current = projectiles.get(p);
@@ -434,6 +430,18 @@ public class Game extends Listener{
 					
 				}
 			}
+			
+			//display units
+			for (Unit u : units) {
+				int[] tile = currentTile(u.getX(),u.getY());
+				if(tile[0] != -1) {
+					u.setTerrainMovement(tiles[tile[0]][tile[1]].getMovement());
+				}
+				u.update();
+				gametextures.loadTexture(u.getColor());
+				model.render(u.getVertices());
+			}
+			
 			
 			//display glow on selected units
 			gametextures.loadTexture(0);
@@ -590,6 +598,20 @@ public class Game extends Listener{
 				if(firingUnits.get(i) == u.getId() && u.getCurrentCooldown() == 0){
 					projectiles.add(new Projectile(u, u.getTeam(), u.getX(), u.getY(), u.getAngle(), 6, 1, 40, 20));
 					u.triggerCooldown();
+				}
+			}
+		}
+	}
+	
+	public void setMine(ArrayList<Integer> firingUnits) {
+		if(firingUnits.isEmpty()) {
+			return;
+		}
+		for (Unit u : units) {
+			for (int i = 0; i < firingUnits.size(); i++) {
+				if(firingUnits.get(i) == u.getId() && u.getNumMines() < 4){
+					u.setNumMines(u.getNumMines() + 1);
+					projectiles.add(new Projectile(u, u.getTeam(), u.getX(), u.getY(), 0, 0, 10, 1000, 21));
 				}
 			}
 		}
@@ -802,6 +824,7 @@ public class Game extends Listener{
 							blue_score += 100;
 						}
 					}
+					p.destroy();
 					projectiles.remove(p);
 					i--;
 					break;
@@ -814,7 +837,7 @@ public class Game extends Listener{
 		for(Unit u : units) {
 			if(u.getHealth() <= 0) {
 				u.setPosition(100*(random.nextInt(6) + 1), 100*(random.nextInt(6) + 1), random.nextInt(360));
-				u.setHealth(u.getMaxHealth());
+				u.respawn();
 			}
 		}
 	}

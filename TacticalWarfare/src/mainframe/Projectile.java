@@ -32,8 +32,16 @@ public class Projectile {
 	}
 	
 	public void createPoints(){
-		int width = 2;
-		int height = 8;
+		int width = 1;
+		int height = 1;
+		if(texid == 20) {
+			 width = 2;
+			 height = 8;
+		}
+		else if(texid == 21) {
+			width = 32;
+			height = 32;
+		}
 		Point[] newpoints = new Point[]{
 			new Point(-width, -height, true),
 			new Point(-width, height, true),
@@ -69,9 +77,16 @@ public class Projectile {
 	public boolean updateLifetime(){
 		current_lifetime += 1;
 		if(current_lifetime >= lifetime){
+			destroy();
 			return false;
 		}
 		return true;
+	}
+	
+	public void destroy() {
+		if(texid == 21) {
+			owner.setNumMines(owner.getNumMines() - 1);
+		}
 	}
 	
 	public int getColor() { //color is texture id

@@ -13,6 +13,7 @@ public class GameTextures {
 	final static Texture redflag = new Texture("redflag.png");
 	final static Texture blueflag = new Texture("blueflag.png");
 	final static Texture projectile = new Texture("projectile_test.png");
+	final static Texture mine = new Texture("mine.png");
 	
 	public void loadTexture(int id){
 		switch (id) {
@@ -38,6 +39,9 @@ public class GameTextures {
 			break;
 		case 20:
 			projectile.bind();
+			break;
+		case 21:
+			mine.bind();
 			break;
 		default:
 			try {

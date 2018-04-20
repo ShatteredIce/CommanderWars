@@ -25,6 +25,7 @@ public class Unit {
 	int current_cooldown = 0;
 	int max_health = 10;
 	int health = 10;
+	int mines = 0;
 	
 	Point locationTarget = null;
 	ArrayList<Point> tilePath = new ArrayList<>();
@@ -136,6 +137,15 @@ public class Unit {
 		System.out.println();
 	}
 	
+	public void respawn() {
+		health = max_health;
+		locationTarget = null;
+		tilePath.clear();
+		current_velocity = 0;
+		current_turn_speed = 0;
+		current_cooldown = 0;
+	}
+	
 	public void setPosition(double newx, double newy, double newangle){
 		center.setX(newx);
 		center.setY(newy);
@@ -221,6 +231,14 @@ public class Unit {
 	
 	public Point[] getPoints() {
 		return points;
+	}
+	
+	public void setNumMines(int newmines) {
+		mines = newmines;
+	}
+	
+	public int getNumMines() {
+		return mines;
 	}
 
 }
