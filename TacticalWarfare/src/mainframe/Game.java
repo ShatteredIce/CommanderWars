@@ -66,7 +66,7 @@ public class Game extends Listener{
 	int unitId = 0;
 	
 	int tick = 0;
-	int ticksPerDay = 24000;
+	int ticksPerDay = 12000;
 	float lightLevel = 1;
 	
 	ArrayList<Player> players = new ArrayList<>();
@@ -464,10 +464,18 @@ public class Game extends Listener{
 			}
 			
 			projectTrueWindowCoordinates();
-			gametextures.loadTexture(11);
+			
+			gametextures.loadTexture(10);
+			model.setTextureCoords(textureCoords);
 			model.render(gameScreenWidth, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 			
+			gametextures.loadTexture(11);
+			double shift = ((double) tick / (double) ticksPerDay) - 0.3;
+			model.setTextureCoords(new double[] {0 + shift, 0, 0 + shift, 1, 0.2 + shift, 0, 0.2 + shift, 1});
+			model.render(gameScreenWidth + 20, 40, gameScreenWidth + 180, 75);
+			
 			gametextures.loadTexture(12);
+			model.setTextureCoords(textureCoords);
 			model.render(gameScreenWidth + 10, 100, gameScreenWidth + 60, 150);
 			bitmap.drawNumber(gameScreenWidth + 70, 110, gameScreenWidth + 95, 140, red_score);
 			
@@ -482,19 +490,19 @@ public class Game extends Listener{
 			if(tick > ticksPerDay) {
 				tick = 0;
 			}
-			else if(tick < 2000) {
-				lightLevel = Math.abs(0.5f - (float) tick/4000);
+			else if(tick < 1000) {
+				lightLevel = Math.abs(0.5f - (float) tick/(ticksPerDay/6));
 			}
-			else if(tick < 12000) {
+			else if(tick < 6000) {
 				lightLevel = 0;
 			}
-			else if(tick < 14000) {
-				lightLevel = ((float) tick-12000) / 4000;
+			else if(tick < 7000) {
+				lightLevel = ((float) tick-(ticksPerDay/2)) /(ticksPerDay/6);
 			}
 			else {
 				lightLevel = 0.5f;
 			}
-			
+			System.out.println(lightLevel);
 			if(tick % 50 == 0) {
 				red_score += red_flags;
 				blue_score += blue_flags;
