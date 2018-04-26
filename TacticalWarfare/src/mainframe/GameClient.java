@@ -242,12 +242,21 @@ public class GameClient extends Listener{
 		});
 		
 		glfwSetMouseButtonCallback (window, (window, button, action, mods) -> {
-			DoubleBuffer xpos = BufferUtils.createDoubleBuffer(1);
-			DoubleBuffer ypos = BufferUtils.createDoubleBuffer(1);
+			DoubleBuffer xpos = BufferUtils.createDoubleBuffer(3);
+			DoubleBuffer ypos = BufferUtils.createDoubleBuffer(3);
 			glfwGetCursorPos(window, xpos, ypos);
+			//convert the glfw coordinate to our coordinate system
+			xpos.put(0, Math.min(Math.max(xpos.get(0), windowXOffset), WINDOW_WIDTH + windowXOffset));
+			ypos.put(0, Math.min(Math.max(ypos.get(0), windowYOffset), WINDOW_HEIGHT + windowYOffset));
+			//relative camera coordinates
+			xpos.put(1, getWidthScalar() * (xpos.get(0) - windowXOffset) + viewX);
+			ypos.put(1, getHeightScalar() * (ypos.get(0) - windowYOffset) + viewY);
+			//true window coordinates
+			xpos.put(2, xpos.get(0) - windowXOffset);
+			ypos.put(2, ypos.get(0) - windowYOffset);
 			if ( button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 				for (int u = 0; u < units.size(); u++) {
-					if(units.get(u).getOwnerId() == myPlayerId && gamelogic.distance(xpos.get(0), ypos.get(0), units.get(u).getX(), units.get(u).getY()) <= 30){
+					if(units.get(u).getOwnerId() == myPlayerId && gamelogic.distance(xpos.get(1), ypos.get(1), units.get(u).getX(), units.get(u).getY()) <= 30){
 						boolean selectUnit = true;
 						for (int i = 0; i < selectedUnitsId.size(); i++) {
 							if(selectedUnitsId.get(i) == units.get(u).getId()){
@@ -264,7 +273,7 @@ public class GameClient extends Listener{
 			}
 			else if ( button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
 				if(selectedUnitsId.size() > 0){
-					client.sendTCP(new MouseClick(xpos.get(0), ypos.get(0), selectedUnitsId));
+					client.sendTCP(new MouseClick(xpos.get(1), ypos.get(1), selectedUnitsId));
 				}
 			}
 		});
@@ -391,6 +400,8 @@ public class GameClient extends Listener{
 			glfwPollEvents();
 			
 			glEnable(GL_TEXTURE_2D);
+			
+			projectRelativeCameraCoordinates();
 					
 			//display tiles
 			for (int i = 0; i < tiles.length; i++) {
@@ -551,6 +562,80 @@ public class GameClient extends Listener{
 	
 	public double getHeightScalar(){
 		return(double) cameraHeight / (double) WINDOW_HEIGHT;
+	}
+	
+	public void updateZoomLevel(boolean zoomOut){
+		DoubleBuffer xpos = BufferUtils.createDoubleBuffer(3);
+		DoubleBuffer ypos = BufferUtils.createDoubleBuffer(3);
+		glfwGetCursorPos(window, xpos, ypos);
+		//convert the glfw coordinate to our coordinate system
+		xpos.put(0, Math.min(Math.max(xpos.get(0), windowXOffset), WINDOW_WIDTH + windowXOffset));
+		ypos.put(0, Math.min(Math.max(ypos.get(0), windowYOffset), WINDOW_HEIGHT + windowYOffset));
+		//relative camera coordinates
+		xpos.put(1, getWidthScalar() * (xpos.get(0) - windowXOffset) + viewX);
+		ypos.put(1, getHeightScalar() * (ypos.get(0) - windowYOffset) + viewY);
+		//true window coordinates
+		xpos.put(2, xpos.get(0) - windowXOffset);
+		ypos.put(2, ypos.get(0) - windowYOffset);
+		
+		boolean mouseInFrame = false;
+		double oldX = xpos.get(1);
+		double oldY = ypos.get(1);
+		double xAxisDistance = 0;
+		double yAxisDistance = 0;
+		
+		if(xpos.get(2) > 0 && xpos.get(2) < gameScreenWidth && ypos.get(2) > 0 && ypos.get(2) < gameScreenHeight){
+			mouseInFrame = true;
+			xAxisDistance = xpos.get(2)/WINDOW_WIDTH;
+			yAxisDistance = ypos.get(2)/WINDOW_HEIGHT;
+		}
+		
+		int MIN_WIDTH = 100;
+		int MIN_HEIGHT = 100;
+		int MAX_WIDTH = worldWidth * WINDOW_WIDTH / gameScreenWidth;
+		int MAX_HEIGHT = worldHeight * WINDOW_HEIGHT / gameScreenHeight;
+		
+		double zoomLevel = 4d/3d;
+		
+		if(!mouseInFrame) {
+			oldX = viewX + (cameraWidth * gameScreenWidth/WINDOW_WIDTH)/2;
+			oldY = viewY + (cameraHeight * gameScreenHeight/WINDOW_HEIGHT)/2;
+			xAxisDistance = (gameScreenWidth/2d/WINDOW_WIDTH);
+			yAxisDistance = (gameScreenHeight/2d/WINDOW_HEIGHT);
+		}
+		
+		
+		if(zoomOut){
+			if(cameraWidth * zoomLevel <= MAX_WIDTH && cameraHeight * zoomLevel <= MAX_HEIGHT){
+				cameraWidth *= zoomLevel;
+				cameraHeight *= zoomLevel;
+				viewX = oldX - cameraWidth * xAxisDistance;
+				viewY = oldY - cameraHeight * yAxisDistance;
+				System.out.println(viewX + " " + cameraWidth); 
+				double gameScreenCameraWidth = cameraWidth * gameScreenWidth / WINDOW_WIDTH;
+				double gameScreenCameraHeight = cameraHeight * gameScreenHeight / WINDOW_HEIGHT;
+				if(viewX + gameScreenCameraWidth > worldWidth){
+					viewX = worldWidth - gameScreenCameraWidth;
+				}
+				if(viewY + gameScreenCameraHeight > worldHeight){
+					viewY = worldHeight - gameScreenCameraHeight;
+				}
+				if(viewX < 0){
+					viewX = 0;
+				}
+				if(viewY < 0){
+					viewY = 0;
+				}
+			}
+		}
+		else{
+			if(cameraWidth / zoomLevel >= MIN_WIDTH && cameraHeight / zoomLevel >= MIN_HEIGHT){
+				cameraWidth /= zoomLevel;
+				cameraHeight /= zoomLevel;
+				viewX = oldX - cameraWidth * xAxisDistance;
+				viewY = oldY - cameraHeight * yAxisDistance;
+			}
+		}
 	}
 
 }

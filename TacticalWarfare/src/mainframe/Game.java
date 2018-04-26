@@ -977,8 +977,8 @@ public class Game extends Listener{
 		
 		int MIN_WIDTH = 100;
 		int MIN_HEIGHT = 100;
-		int MAX_WIDTH = 1280;
-		int MAX_HEIGHT = 1280;
+		int MAX_WIDTH = worldWidth * WINDOW_WIDTH / gameScreenWidth;
+		int MAX_HEIGHT = worldHeight * WINDOW_HEIGHT / gameScreenHeight;
 		
 		double zoomLevel = 4d/3d;
 		
@@ -989,8 +989,6 @@ public class Game extends Listener{
 			yAxisDistance = (gameScreenHeight/2d/WINDOW_HEIGHT);
 		}
 		
-		System.out.println(oldX + " " + oldY);
-		System.out.println(xAxisDistance + " " + yAxisDistance);
 		
 		if(zoomOut){
 			if(cameraWidth * zoomLevel <= MAX_WIDTH && cameraHeight * zoomLevel <= MAX_HEIGHT){
@@ -998,11 +996,14 @@ public class Game extends Listener{
 				cameraHeight *= zoomLevel;
 				viewX = oldX - cameraWidth * xAxisDistance;
 				viewY = oldY - cameraHeight * yAxisDistance;
-				if(viewX + cameraWidth > WINDOW_WIDTH){
-					viewX = WINDOW_WIDTH - cameraWidth;
+				System.out.println(viewX + " " + cameraWidth); 
+				double gameScreenCameraWidth = cameraWidth * gameScreenWidth / WINDOW_WIDTH;
+				double gameScreenCameraHeight = cameraHeight * gameScreenHeight / WINDOW_HEIGHT;
+				if(viewX + gameScreenCameraWidth > worldWidth){
+					viewX = worldWidth - gameScreenCameraWidth;
 				}
-				if(viewY + cameraHeight > WINDOW_HEIGHT){
-					viewY = WINDOW_HEIGHT - cameraHeight;
+				if(viewY + gameScreenCameraHeight > worldHeight){
+					viewY = worldHeight - gameScreenCameraHeight;
 				}
 				if(viewX < 0){
 					viewX = 0;
