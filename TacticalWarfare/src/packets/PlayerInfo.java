@@ -3,16 +3,16 @@ package packets;
 public class PlayerInfo {
 	
 	private int action;
-	private String team;
+	private int color;
 	private int id;
 	
 	public PlayerInfo(){
 		
 	}
 	
-	public PlayerInfo(int newaction, String newteam, int newid){
+	public PlayerInfo(int newaction, int newcolor, int newid){
 		action = newaction;
-		team = newteam;
+		color = newcolor;
 		id = newid;
 	}
 
@@ -20,8 +20,8 @@ public class PlayerInfo {
 		return action;
 	}
 
-	public String getTeam() {
-		return team;
+	public int getColor() {
+		return color;
 	}
 
 	public int getId() {

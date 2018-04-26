@@ -2,11 +2,11 @@ package packets;
 
 public class ProjectileInfo {
 	
-	String team;
+	int color;
 	double unitX;
 	double unitY;
 	double angle;
-	int color;
+	int texId;
 	double[] vertices;
 	double[] outlineVertices;
 	
@@ -14,17 +14,17 @@ public class ProjectileInfo {
 		
 	}
 	
-	public ProjectileInfo(String myteam, double x, double y, double newangle, int newcolor, double[] newvertices){
-		team = myteam;
+	public ProjectileInfo(int newcolor, double x, double y, double newangle, int newtexId, double[] newvertices){
+		color = newcolor;
 		unitX = x;
 		unitY = y;
 		angle = newangle;
-		color = newcolor;
+		texId = newtexId;
 		vertices = newvertices;
 	}
 	
-	public String getTeam(){
-		return team;
+	public int getColor() {
+		return color;
 	}
 	
 	public double getX(){
@@ -39,8 +39,8 @@ public class ProjectileInfo {
 		return angle;
 	}
 	
-	public int getColor() {
-		return color;
+	public int getTexId(){
+		return texId;
 	}
 	
 	public double[] getVertices(){

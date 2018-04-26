@@ -6,7 +6,7 @@ public class Projectile {
 	
 	Random random = new Random();
 	Unit owner;
-	String team;
+	int color;
 	double[] vertices = new double[8];
 	Point[] points; 
 		
@@ -18,9 +18,9 @@ public class Projectile {
 	double current_lifetime = 0;
 	int texid;
 	
-	public Projectile(Unit newowner, String myteam, double spawnx, double spawny, double newangle, double newspeed, int newdamage, double newlifetime, int newtexid) {
+	public Projectile(Unit newowner, int newcolor, double spawnx, double spawny, double newangle, double newspeed, int newdamage, double newlifetime, int newtexid) {
 		owner = newowner;
-		team = myteam;
+		color = newcolor;
 		center = new Point(spawnx, spawny);
 		angle = newangle;
 		speed = newspeed;
@@ -92,12 +92,12 @@ public class Projectile {
 		}
 	}
 	
-	public int getColor() { //color is texture id
+	public int getTexId() {
 		return texid;
 	}
 	
-	public String getTeam(){
-		return team;
+	public int getColor() {
+		return color;
 	}
 	
 	public double getAngle(){

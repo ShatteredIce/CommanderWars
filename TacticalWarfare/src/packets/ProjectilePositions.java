@@ -14,7 +14,7 @@ public class ProjectilePositions {
 	public ProjectilePositions(ArrayList<Projectile> projectiles){
 		for (int i = 0; i < projectiles.size(); i++) {
 			Projectile p = projectiles.get(i);
-			getProjectiledata().add(new ProjectileInfo(p.getTeam(), p.getX(), p.getY(), p.getAngle(), p.getColor(), p.getVertices()));
+			getProjectiledata().add(new ProjectileInfo(p.getColor(), p.getX(), p.getY(), p.getAngle(), p.getTexId(), p.getVertices()));
 		}
 	}
 

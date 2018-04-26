@@ -27,6 +27,12 @@ public class Unit {
 	int health = 10;
 	int mines = 0;
 	
+	//Screen bounds
+	public double x_min;
+	public double x_max;
+	public double y_min;
+	public double y_max;
+	
 	Point locationTarget = null;
 	ArrayList<Point> tilePath = new ArrayList<>();
 	
@@ -34,7 +40,7 @@ public class Unit {
 		
 	}
 	
-	public Unit(int myid, int newid, String newteam, double spawnx, double spawny, double spawnangle, int newcolor){
+	public Unit(int myid, int newid, String newteam, double spawnx, double spawny, double spawnangle, int newcolor, int[] newbounds){
 		id = myid;
 		ownerid = newid;
 		team = newteam;
@@ -43,6 +49,7 @@ public class Unit {
 		color = newcolor; //1 for red, 2 for blue
 		createPoints();
 		setPoints();
+		setScreenBounds(newbounds);
 	}
 	
 	public void setPoints(){
@@ -51,8 +58,13 @@ public class Unit {
 		//set the center point if not offscreen
 		Point newcenter = new Point(center.X(), center.Y()+(current_velocity/terrain_movement_modifier));
 		newcenter.rotatePoint(center.X(), center.Y(), angle);
-		center.setX(newcenter.X());
-		center.setY(newcenter.Y()); 
+		if(onScreen(newcenter.X(), newcenter.Y())){
+			center.setX(newcenter.X());
+			center.setY(newcenter.Y()); 
+		}
+		else{
+			current_velocity = 0;
+		}
 		//Set points for unit facing upward, then rotate points to player angle
 		int v_index = 0;
 		for (int i = 0; i < points.length; i++) {
@@ -199,6 +211,23 @@ public class Unit {
 			new Point(outlineWidth, outlineHeight, true),
 		};
 		outlinePoints = newoutlinepoints;
+	}
+	
+	public void setScreenBounds(int[] bounds){
+		x_min = bounds[0];
+		x_max = bounds[1];
+		y_min = bounds[2];
+		y_max = bounds[3];
+	}
+	
+	public boolean onScreen(double x, double y){
+		if((x_min < x) && (x_max > x) &&
+				(y_min < y) && (y_max > y)){
+			return true;
+		}
+		else{
+			return false;
+		}
 	}
 	
 	public double[] getVertices(){

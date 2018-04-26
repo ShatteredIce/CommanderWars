@@ -19,6 +19,7 @@ import packets.MouseClick;
 import packets.PlayerInfo;
 import packets.ProjectileInfo;
 import packets.ProjectilePositions;
+import packets.ScoreData;
 import packets.TileInfo;
 import packets.UnitInfo;
 import packets.UnitMovement;
@@ -44,6 +45,9 @@ public class Game extends Listener{
 	int gameScreenWidth = 640;
 	int gameScreenHeight = 640;
 	
+	int worldWidth = 640;
+	int worldHeight = 640;
+	
 	public double viewX = 0;
 	public double viewY = 0;
 	public double cameraSpeed = 10;
@@ -66,7 +70,7 @@ public class Game extends Listener{
 	int unitId = 0;
 	
 	int tick = 0;
-	int ticksPerDay = 12000;
+	int ticksPerDay = 24000;
 	float lightLevel = 1;
 	
 	ArrayList<Player> players = new ArrayList<>();
@@ -78,6 +82,9 @@ public class Game extends Listener{
 	boolean spacePressed = false;
 	
 	int gameState = 3;
+	
+	int red_players = 0;
+	int blue_players = 0;
 	
 	int red_flags = 0;
 	int blue_flags = 0;
@@ -115,6 +122,7 @@ public class Game extends Listener{
 		server.getKryo().register(double[].class);
 		server.getKryo().register(int[].class);
 		server.getKryo().register(int[][].class);
+		server.getKryo().register(ScoreData.class);
 		server.getKryo().register(UnitPositions.class);
 		server.getKryo().register(ProjectilePositions.class);
 		server.getKryo().register(PlayerInfo.class);
@@ -156,22 +164,31 @@ public class Game extends Listener{
 		//add previous players
 		for (int i = 0; i < players.size(); i++) {
 			Player previous = players.get(i);
-			server.sendToTCP(c.getID(), new PlayerInfo(1, previous.getTeam(), previous.getId()));
+			server.sendToTCP(c.getID(), new PlayerInfo(1, previous.getColor(), previous.getId()));
 		}
-		Player newplayer = new Player("derp", c.getID());
+		Player newplayer;
+		if(blue_players < red_players) {
+			newplayer = new Player(2, c.getID());
+			blue_players++;
+		}
+		else{
+			newplayer = new Player(1, c.getID());
+			red_players++;
+		}
 		players.add(newplayer);
-		server.sendToAllTCP(new PlayerInfo(1, newplayer.getTeam(), newplayer.getId()));
+		server.sendToAllTCP(new PlayerInfo(1, newplayer.getColor(), newplayer.getId()));
 		String unitTeam = "blue";
 		double unitX = 100*(random.nextInt(6) + 1);
 		double unitY = 100*(random.nextInt(6) + 1);
 		double unitAngle = random.nextInt(360);
 		System.out.println(unitId + " " + newplayer.getId());
-		units.add(createUnit(newplayer.getId(), unitTeam, unitX, unitY, unitAngle, 2));
+		units.add(createUnit(newplayer.getId(), unitTeam, unitX, unitY, unitAngle, newplayer.getColor()));
 		System.out.println("finished recieving client " + c.getID());
 	}
 	
 	public void updateClients(){
 		for (int i = 0; i < players.size(); i++) {
+			server.sendToAllTCP(new ScoreData(red_score, blue_score));
 			server.sendToAllTCP(new UnitPositions(units));
 			server.sendToAllTCP(new ProjectilePositions(projectiles));
 		}
@@ -206,7 +223,13 @@ public class Game extends Listener{
 //		//remove player that disconnected
 		for (int p = 0; p < players.size(); p++) {
 			if(players.get(p).getId() == c.getID()){
-				server.sendToAllTCP(new PlayerInfo(2, players.get(p).getTeam(), players.get(p).getId()));
+				server.sendToAllTCP(new PlayerInfo(2, players.get(p).getColor(), players.get(p).getId()));
+				if(players.get(p).getColor() == 1) {
+					red_players--;
+				}
+				else if(players.get(p).getColor() == 2) {
+					blue_players--;
+				}
 				players.remove(p);
 				break;
 			}
@@ -242,7 +265,8 @@ public class Game extends Listener{
 		// Setup a key callback. It will be called every time a key is pressed, repeated or released.
 		glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
 			if ( key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE )
-				glfwSetWindowShouldClose(window, true); // We will detect this in the rendering loop
+				glfwSetWindowShouldClose(window, true);
+			//camera controls
 			if ( key == GLFW_KEY_MINUS && action == GLFW_PRESS )
 				if(gameState == 3){
 					updateZoomLevel(true);
@@ -270,7 +294,7 @@ public class Game extends Listener{
 				panDown = true;
 			if ( key == GLFW_KEY_DOWN && action == GLFW_RELEASE )
 				panDown = false;
-			
+			//manual unit control
 			if ( key == GLFW_KEY_A && action == GLFW_PRESS )
 				aPressed = true;
 			if ( key == GLFW_KEY_A && action == GLFW_RELEASE )
@@ -384,14 +408,15 @@ public class Game extends Listener{
 		
 		generateMap();
 //		loadUnits();
-		Player newplayer = new Player("derp", serverPlayerId);
+		Player newplayer = new Player(1, serverPlayerId);
 		players.add(newplayer);
-		server.sendToAllTCP(new PlayerInfo(1, newplayer.getTeam(), newplayer.getId()));
+		server.sendToAllTCP(new PlayerInfo(1, newplayer.getColor(), newplayer.getId()));
 		String unitTeam = "red";
 //		double unitX = 100*(random.nextInt(6) + 1);
 //		double unitY = 100*(random.nextInt(6) + 1);
 		double unitAngle = random.nextInt(360);
 		Unit serverUnit = createUnit(newplayer.getId(), unitTeam, 100, 100, unitAngle, 1);
+		red_players++;
 		units.add(serverUnit);
 		
 
@@ -435,7 +460,7 @@ public class Game extends Listener{
 					p--;
 				}
 				else {
-					gametextures.loadTexture(current.getColor());
+					gametextures.loadTexture(current.getTexId());
 					model.render(current.getVertices());
 					
 				}
@@ -490,19 +515,18 @@ public class Game extends Listener{
 			if(tick > ticksPerDay) {
 				tick = 0;
 			}
-			else if(tick < 1000) {
+			else if(tick < 2000) {
 				lightLevel = Math.abs(0.5f - (float) tick/(ticksPerDay/6));
 			}
-			else if(tick < 6000) {
+			else if(tick < 12000) {
 				lightLevel = 0;
 			}
-			else if(tick < 7000) {
+			else if(tick < 14000) {
 				lightLevel = ((float) tick-(ticksPerDay/2)) /(ticksPerDay/6);
 			}
 			else {
 				lightLevel = 0.5f;
 			}
-			System.out.println(lightLevel);
 			if(tick % 50 == 0) {
 				red_score += red_flags;
 				blue_score += blue_flags;
@@ -648,7 +672,7 @@ public class Game extends Listener{
 		for (Unit u : units) {
 			for (int i = 0; i < firingUnits.size(); i++) {
 				if(firingUnits.get(i) == u.getId() && u.getCurrentCooldown() == 0){
-					projectiles.add(new Projectile(u, u.getTeam(), u.getX(), u.getY(), u.getAngle(), 6, 1, 40, 20));
+					projectiles.add(new Projectile(u, u.getColor(), u.getX(), u.getY(), u.getAngle(), 6, 1, 40, 20));
 					u.triggerCooldown();
 				}
 			}
@@ -663,7 +687,7 @@ public class Game extends Listener{
 			for (int i = 0; i < firingUnits.size(); i++) {
 				if(firingUnits.get(i) == u.getId() && u.getNumMines() < 4){
 					u.setNumMines(u.getNumMines() + 1);
-					projectiles.add(new Projectile(u, u.getTeam(), u.getX(), u.getY(), 0, 0, 5, 1000, 21));
+					projectiles.add(new Projectile(u, u.getColor(), u.getX(), u.getY(), 0, 0, 5, 1000, 21));
 				}
 			}
 		}
@@ -863,19 +887,19 @@ public class Game extends Listener{
 	public void checkProjectiles() {
 		for (int i = 0; i < projectiles.size(); i++) {
     		Projectile p = projectiles.get(i);
-    		if(p.getColor() == 21) {
-    			return;
+    		if(p.getTexId() == 21) {
+    			continue;
     		}
 			for (int j = 0; j < units.size(); j++) {
 				Unit u = units.get(j);
-				if(gamelogic.polygon_intersection(p.getPoints(), u.getPoints()) && !(p.getTeam().equals(u.getTeam()))){
+				if(gamelogic.polygon_intersection(p.getPoints(), u.getPoints()) && (p.getColor() != u.getColor())){
 					u.setHealth(u.getHealth() - p.getDamage());
 					//update score for kill
 					if(u.getHealth() <= 0) {
-						if(p.getTeam().equals("red")) {
+						if(p.getColor() == 1) {
 							red_score += 100;
 						}
-						else if(p.getTeam().equals("blue")) {
+						else if(p.getColor() == 2) {
 							blue_score += 100;
 						}
 					}
@@ -898,7 +922,7 @@ public class Game extends Listener{
 	}
 	
 	public Unit createUnit(int newownerid, String newteam, double newx, double newy, double newangle, int newcolor){
-		Unit u = new Unit(unitId, newownerid, newteam, newx, newy, newangle, newcolor);
+		Unit u = new Unit(unitId, newownerid, newteam, newx, newy, newangle, newcolor, new int[] {0, worldWidth, 0, worldHeight});
 		unitId++;
 		return u;
 	}
@@ -958,23 +982,27 @@ public class Game extends Listener{
 		
 		double zoomLevel = 4d/3d;
 		
+		if(!mouseInFrame) {
+			oldX = viewX + (cameraWidth * gameScreenWidth/WINDOW_WIDTH)/2;
+			oldY = viewY + (cameraHeight * gameScreenHeight/WINDOW_HEIGHT)/2;
+			xAxisDistance = (gameScreenWidth/2d/WINDOW_WIDTH);
+			yAxisDistance = (gameScreenHeight/2d/WINDOW_HEIGHT);
+		}
+		
+		System.out.println(oldX + " " + oldY);
+		System.out.println(xAxisDistance + " " + yAxisDistance);
+		
 		if(zoomOut){
 			if(cameraWidth * zoomLevel <= MAX_WIDTH && cameraHeight * zoomLevel <= MAX_HEIGHT){
 				cameraWidth *= zoomLevel;
 				cameraHeight *= zoomLevel;
-				if(mouseInFrame){
-					viewX = oldX - cameraWidth * xAxisDistance;
-					viewY = oldY - cameraHeight * yAxisDistance;
+				viewX = oldX - cameraWidth * xAxisDistance;
+				viewY = oldY - cameraHeight * yAxisDistance;
+				if(viewX + cameraWidth > WINDOW_WIDTH){
+					viewX = WINDOW_WIDTH - cameraWidth;
 				}
-				else{
-					viewX -= cameraWidth / 6;
-					viewY -= cameraWidth / 6;
-				}
-				if(viewX + cameraWidth > gameScreenWidth){
-					viewX = gameScreenWidth - cameraWidth;
-				}
-				if(viewY + cameraHeight > gameScreenHeight){
-					viewY = gameScreenHeight - cameraHeight;
+				if(viewY + cameraHeight > WINDOW_HEIGHT){
+					viewY = WINDOW_HEIGHT - cameraHeight;
 				}
 				if(viewX < 0){
 					viewX = 0;
@@ -988,14 +1016,8 @@ public class Game extends Listener{
 			if(cameraWidth / zoomLevel >= MIN_WIDTH && cameraHeight / zoomLevel >= MIN_HEIGHT){
 				cameraWidth /= zoomLevel;
 				cameraHeight /= zoomLevel;
-				if(mouseInFrame){
-					viewX = oldX - cameraWidth * xAxisDistance;
-					viewY = oldY - cameraHeight * yAxisDistance;
-				}
-				else{
-					viewX += cameraWidth / 4;
-					viewY += cameraHeight / 4;
-				}
+				viewX = oldX - cameraWidth * xAxisDistance;
+				viewY = oldY - cameraHeight * yAxisDistance;
 			}
 		}
 	}

@@ -3,7 +3,7 @@ import java.util.ArrayList;
 
 
 public class Player {
-	String team;
+	int color;
 	int id;
 	ArrayList<Unit> selectedUnits = new ArrayList<>();
 	
@@ -11,13 +11,13 @@ public class Player {
 
 	}
 	
-	public Player(String myteam, int newid){
-		team = myteam;
+	public Player(int newcolor, int newid){
+		color = newcolor;
 		id = newid;
 	}
 	
-	public String getTeam(){
-		return team;
+	public int getColor(){
+		return color;
 	}
 	
 	public int getId(){
