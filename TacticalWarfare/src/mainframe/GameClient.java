@@ -1,5 +1,6 @@
 package mainframe;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 import org.lwjgl.*;
 import org.lwjgl.glfw.*;
@@ -27,6 +28,7 @@ import rendering.GameTextures;
 import rendering.Model;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.nio.*;
 
 import static org.lwjgl.glfw.Callbacks.*;
@@ -45,6 +47,8 @@ public class GameClient extends Listener{
 	
 	int worldWidth = 640;
 	int worldHeight = 640;
+	
+	int tileLength = 64;
 	
 	public double viewX = 0;
 	public double viewY = 0;
@@ -97,13 +101,14 @@ public class GameClient extends Listener{
 	//networking
 	static Client client;
 	//ip of server
-	static String ip = "localhost";
+	static String ip = "manual";
 	static int tcpPort = 27960;
 	static int udpPort = 27960;
 	
 	static Bitmap bitmap;
 	
 	public void run() throws IOException {
+		
 		//create client
 		client = new Client();
 		//register packets
@@ -127,13 +132,32 @@ public class GameClient extends Listener{
 		//start the client
 		client.start();
 		
-		//connect to the server
-		client.connect(5000, ip, tcpPort, udpPort);
+		Scanner scanner = new Scanner(System.in);
+		
+		if(ip.equals("manual")) {
+			System.out.print("Enter Host IP: ");
+			ip = scanner.nextLine();
+		}
+		while(true) {
+			try {
+				//connect to the server
+				client.connect(5000, ip, tcpPort, udpPort);
+				break;
+			}
+			catch(UnknownHostException e) {
+				System.out.println("Failed to connect to " + ip);
+				System.out.print("Enter Host IP: ");
+				ip = scanner.nextLine();
+			}
+			if(ip.equals("")) {
+				System.exit(0);
+			}
+		}
 		
 		client.addListener(this);
 		myPlayerId = client.getID();
 		
-		System.out.println("client is ready");
+		System.out.println("Client Initialized");
 		
 		initGLFW();
 		loop();
@@ -315,7 +339,7 @@ public class GameClient extends Listener{
 			case 1:
 				players.add(new Player(packet.getColor(), packet.getId()));
 				client.sendTCP(new Message("recieved new player", packet.getId()));
-				System.out.println("recieved player " + packet.getId());
+//				System.out.println("recieved player " + packet.getId());
 				break;
 			//delete player
 			case 2:
@@ -346,6 +370,8 @@ public class GameClient extends Listener{
 			map = packet.getData();
 			mapWidth = map.length;
 			mapHeight = map[0].length;
+			worldWidth = mapWidth * tileLength;
+			worldHeight = mapHeight * tileLength;
 			tick = packet.getTick();
 		}
 		else if(obj instanceof TileInfo) {
@@ -501,9 +527,9 @@ public class GameClient extends Listener{
 				avgX /= selectedUnitsId.size();
 				avgY /= selectedUnitsId.size();
 						
-				viewX = Math.min(gameScreenWidth - cameraWidth * (double) gameScreenWidth / (double) WINDOW_WIDTH,
+				viewX = Math.min(worldWidth - cameraWidth * (double) gameScreenWidth / (double) WINDOW_WIDTH,
 						Math.max(0, avgX - cameraWidth/2));
-				viewY = Math.min(gameScreenHeight - cameraHeight * (double) gameScreenHeight / (double) WINDOW_HEIGHT,
+				viewY = Math.min(worldHeight - cameraHeight * (double) gameScreenHeight / (double) WINDOW_HEIGHT,
 						Math.max(0, avgY - cameraHeight/2));
 			}
 						
@@ -513,11 +539,11 @@ public class GameClient extends Listener{
 				unitTracking = false;
 			}
 			if (panRight) {
-				viewX = Math.min(gameScreenWidth - cameraWidth * (double) gameScreenWidth / (double) WINDOW_WIDTH, viewX + cameraWidth / 30);
+				viewX = Math.min(worldWidth - cameraWidth * (double) gameScreenWidth / (double) WINDOW_WIDTH, viewX + cameraWidth / 30);
 				unitTracking = false;
 			}
 			if (panDown) {
-				viewY = Math.min(gameScreenHeight - cameraHeight * (double) gameScreenHeight / (double) WINDOW_HEIGHT, viewY + cameraHeight / 30);
+				viewY = Math.min(worldHeight - cameraHeight * (double) gameScreenHeight / (double) WINDOW_HEIGHT, viewY + cameraHeight / 30);
 				unitTracking = false;
 			}
 			if (panUp) {
@@ -611,7 +637,7 @@ public class GameClient extends Listener{
 				cameraHeight *= zoomLevel;
 				viewX = oldX - cameraWidth * xAxisDistance;
 				viewY = oldY - cameraHeight * yAxisDistance;
-				System.out.println(viewX + " " + cameraWidth); 
+//				System.out.println(viewX + " " + cameraWidth); 
 				double gameScreenCameraWidth = cameraWidth * gameScreenWidth / WINDOW_WIDTH;
 				double gameScreenCameraHeight = cameraHeight * gameScreenHeight / WINDOW_HEIGHT;
 				if(viewX + gameScreenCameraWidth > worldWidth){

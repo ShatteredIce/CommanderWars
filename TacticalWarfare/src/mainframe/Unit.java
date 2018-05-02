@@ -111,7 +111,7 @@ public class Unit {
 			double distance = gamelogic.distance(this.getX(), this.getY(), locationTarget.X(), locationTarget.Y());
 			double leftBearing = gamelogic.getTurnDistance(angle, targetAngle, true);
 			double rightBearing = gamelogic.getTurnDistance(angle, targetAngle, false);
-			if(!(Math.min(leftBearing, rightBearing) == 0)){
+			if(!(Math.min(leftBearing, rightBearing) < 1)){
 				if(leftBearing <= rightBearing){ //turn left
 					current_velocity = 0;
 					current_turn_speed = Math.min(max_turn_speed, (gamelogic.normalizeAngle(targetAngle - angle)));
@@ -167,9 +167,9 @@ public class Unit {
 		locationTarget = null;
 		tilePath = path;
 		for (int i = 0; i < path.size(); i++) {
-			System.out.println(path.get(i).X() + " " + path.get(i).Y());
+//			System.out.println(path.get(i).X() + " " + path.get(i).Y());
 		}
-		System.out.println();
+//		System.out.println();
 	}
 	
 	public void respawn() {

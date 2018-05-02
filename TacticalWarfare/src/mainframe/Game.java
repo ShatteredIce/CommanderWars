@@ -48,6 +48,8 @@ public class Game extends Listener{
 	int worldWidth = 640;
 	int worldHeight = 640;
 	
+	int tileLength = 64;
+	
 	public double viewX = 0;
 	public double viewY = 0;
 	public double cameraSpeed = 10;
@@ -138,7 +140,7 @@ public class Game extends Listener{
 		
 		//start server
 		server.start();
-		System.out.println("server is on");
+		System.out.println("Server Initialized");
 		
 		server.addListener(this);
 		
@@ -178,12 +180,12 @@ public class Game extends Listener{
 		players.add(newplayer);
 		server.sendToAllTCP(new PlayerInfo(1, newplayer.getColor(), newplayer.getId()));
 		String unitTeam = "blue";
-		double unitX = 100*(random.nextInt(6) + 1);
-		double unitY = 100*(random.nextInt(6) + 1);
+		double unitX = (random.nextInt(worldWidth - 64) + 32);
+		double unitY = (random.nextInt(worldHeight - 64) + 32);
 		double unitAngle = random.nextInt(360);
-		System.out.println(unitId + " " + newplayer.getId());
+//		System.out.println(unitId + " " + newplayer.getId());
 		units.add(createUnit(newplayer.getId(), unitTeam, unitX, unitY, unitAngle, newplayer.getColor()));
-		System.out.println("finished recieving client " + c.getID());
+//		System.out.println("finished recieving client " + c.getID());
 	}
 	
 	public void updateClients(){
@@ -219,7 +221,7 @@ public class Game extends Listener{
 	//when a connection disconnects
 	@Override
 	public void disconnected(Connection c){
-		System.out.println("A client disconnected");
+//		System.out.println("A client disconnected");
 //		//remove player that disconnected
 		for (int p = 0; p < players.size(); p++) {
 			if(players.get(p).getId() == c.getID()){
@@ -412,10 +414,10 @@ public class Game extends Listener{
 		players.add(newplayer);
 		server.sendToAllTCP(new PlayerInfo(1, newplayer.getColor(), newplayer.getId()));
 		String unitTeam = "red";
-//		double unitX = 100*(random.nextInt(6) + 1);
-//		double unitY = 100*(random.nextInt(6) + 1);
+		double unitX = (random.nextInt(worldWidth - 64) + 32);
+		double unitY = (random.nextInt(worldHeight - 64) + 32);
 		double unitAngle = random.nextInt(360);
-		Unit serverUnit = createUnit(newplayer.getId(), unitTeam, 100, 100, unitAngle, 1);
+		Unit serverUnit = createUnit(newplayer.getId(), unitTeam, unitX, unitY, unitAngle, 1);
 		red_players++;
 		units.add(serverUnit);
 		
@@ -556,9 +558,9 @@ public class Game extends Listener{
 				avgX /= selectedUnitsId.size();
 				avgY /= selectedUnitsId.size();
 						
-				viewX = Math.min(gameScreenWidth - cameraWidth * (double) gameScreenWidth / (double) WINDOW_WIDTH,
+				viewX = Math.min(worldWidth - cameraWidth * (double) gameScreenWidth / (double) WINDOW_WIDTH,
 						Math.max(0, avgX - cameraWidth/2));
-				viewY = Math.min(gameScreenHeight - cameraHeight * (double) gameScreenHeight / (double) WINDOW_HEIGHT,
+				viewY = Math.min(worldHeight - cameraHeight * (double) gameScreenHeight / (double) WINDOW_HEIGHT,
 						Math.max(0, avgY - cameraHeight/2));
 			}
 			
@@ -570,11 +572,11 @@ public class Game extends Listener{
 				unitTracking = false;
 			}
 			if (panRight) {
-				viewX = Math.min(gameScreenWidth - cameraWidth * (double) gameScreenWidth / (double) WINDOW_WIDTH, viewX + cameraWidth / 30);
+				viewX = Math.min(worldWidth - cameraWidth * (double) gameScreenWidth / (double) WINDOW_WIDTH, viewX + cameraWidth / 30);
 				unitTracking = false;
 			}
 			if (panDown) {
-				viewY = Math.min(gameScreenHeight - cameraHeight * (double) gameScreenHeight / (double) WINDOW_HEIGHT, viewY + cameraHeight / 30);
+				viewY = Math.min(worldHeight - cameraHeight * (double) gameScreenHeight / (double) WINDOW_HEIGHT, viewY + cameraHeight / 30);
 				unitTracking = false;
 			}
 			if (panUp) {
@@ -694,8 +696,10 @@ public class Game extends Listener{
 	}
 	
 	public void generateMap(){
-		mapWidth = 10;
-		mapHeight = 10;
+		mapWidth = 30;
+		mapHeight = 20;
+		worldWidth = mapWidth * tileLength;
+		worldHeight = mapHeight * tileLength;
 		map = new int[mapWidth][mapHeight];
 		for (int i = 0; i < mapWidth; i++) {
 			for (int j = 0; j < mapHeight; j++) {
@@ -727,6 +731,7 @@ public class Game extends Listener{
 		}
 		//move all the selected units
 		for (int i = 0; i < movedUnits.size(); i++) {
+			movedUnits.get(i).clearMovement();
 			moveUnit(movedUnits.get(i), xpos, ypos);
 		}
 	}
@@ -761,7 +766,7 @@ public class Game extends Listener{
 				}
 			}
 			if(minDistX == -1){
-				System.out.println("No Path Found: " + startx + " " + starty + " to " + endx + " " + endy);
+//				System.out.println("No Path Found: " + startx + " " + starty + " to " + endx + " " + endy);
 				return null;
 			}
 			//remove last distance tile from the unvisited list
@@ -915,7 +920,7 @@ public class Game extends Listener{
 	public void respawnUnits() {
 		for(Unit u : units) {
 			if(u.getHealth() <= 0) {
-				u.setPosition(100*(random.nextInt(6) + 1), 100*(random.nextInt(6) + 1), random.nextInt(360));
+				u.setPosition((random.nextInt(worldWidth - 64) + 32), (random.nextInt(worldHeight - 64) + 32), random.nextInt(360));
 				u.respawn();
 			}
 		}
@@ -996,7 +1001,7 @@ public class Game extends Listener{
 				cameraHeight *= zoomLevel;
 				viewX = oldX - cameraWidth * xAxisDistance;
 				viewY = oldY - cameraHeight * yAxisDistance;
-				System.out.println(viewX + " " + cameraWidth); 
+//				System.out.println(viewX + " " + cameraWidth); 
 				double gameScreenCameraWidth = cameraWidth * gameScreenWidth / WINDOW_WIDTH;
 				double gameScreenCameraHeight = cameraHeight * gameScreenHeight / WINDOW_HEIGHT;
 				if(viewX + gameScreenCameraWidth > worldWidth){
