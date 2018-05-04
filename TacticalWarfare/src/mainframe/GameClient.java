@@ -78,6 +78,8 @@ public class GameClient extends Listener{
 	ArrayList<UnitInfo> units = new ArrayList<>();
 	ArrayList<ProjectileInfo> projectiles = new ArrayList<>();
 	ArrayList<Integer> selectedUnitsId = new ArrayList<>();
+	ArrayList<int[]> redSpawns = new ArrayList<>();
+	ArrayList<int[]> blueSpawns = new ArrayList<>();
 	
 	int myPlayerId = -1;
 	
@@ -153,6 +155,8 @@ public class GameClient extends Listener{
 				System.exit(0);
 			}
 		}
+		
+		scanner.close();
 		
 		client.addListener(this);
 		myPlayerId = client.getID();
@@ -372,6 +376,8 @@ public class GameClient extends Listener{
 			mapHeight = map[0].length;
 			worldWidth = mapWidth * tileLength;
 			worldHeight = mapHeight * tileLength;
+			redSpawns = packet.getRedSpawns();
+			blueSpawns = packet.getBlueSpawns();
 			tick = packet.getTick();
 		}
 		else if(obj instanceof TileInfo) {
@@ -435,6 +441,19 @@ public class GameClient extends Listener{
 					tiles[i][j].setTexture();
 					model.render(tiles[i][j].getVertices());
 				}
+			}
+			
+			//display spawnpoints
+			for (int i = 0; i < redSpawns.size(); i++) {
+				int[] current = redSpawns.get(i);
+				gametextures.loadTexture(14);
+				model.render(current[0] * tileLength, current[1] * tileLength, current[0] * tileLength + 128, current[1] * tileLength + 128);
+			}
+			
+			for (int i = 0; i < blueSpawns.size(); i++) {
+				int[] current = blueSpawns.get(i);
+				gametextures.loadTexture(15);
+				model.render(current[0] * tileLength, current[1] * tileLength, current[0] * tileLength + 128, current[1] * tileLength + 128);
 			}
 			
 			//display projectiles
@@ -528,9 +547,9 @@ public class GameClient extends Listener{
 				avgY /= selectedUnitsId.size();
 						
 				viewX = Math.min(worldWidth - cameraWidth * (double) gameScreenWidth / (double) WINDOW_WIDTH,
-						Math.max(0, avgX - cameraWidth/2));
+						Math.max(0, avgX - cameraWidth * mapWidthScalar() /2));
 				viewY = Math.min(worldHeight - cameraHeight * (double) gameScreenHeight / (double) WINDOW_HEIGHT,
-						Math.max(0, avgY - cameraHeight/2));
+						Math.max(0, avgY - cameraHeight * mapHeightScalar() /2));
 			}
 						
 			//move camera
@@ -588,6 +607,14 @@ public class GameClient extends Listener{
 	
 	public double getHeightScalar(){
 		return(double) cameraHeight / (double) WINDOW_HEIGHT;
+	}
+	
+	public double mapWidthScalar() {
+		return (double) gameScreenWidth / (double) WINDOW_WIDTH;
+	}
+	
+	public double mapHeightScalar() {
+		return (double) gameScreenHeight / (double) WINDOW_HEIGHT;
 	}
 	
 	public void updateZoomLevel(boolean zoomOut){

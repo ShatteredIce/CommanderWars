@@ -79,6 +79,8 @@ public class Game extends Listener{
 	ArrayList<Unit> units = new ArrayList<>();
 	ArrayList<Projectile> projectiles = new ArrayList<>();
 	ArrayList<Integer> selectedUnitsId = new ArrayList<>();
+	ArrayList<int[]> redSpawns = new ArrayList<>();
+	ArrayList<int[]> blueSpawns = new ArrayList<>();
 	
 	boolean clientRecieved = false;
 	boolean spacePressed = false;
@@ -162,7 +164,7 @@ public class Game extends Listener{
 	public void connected(Connection c){
 		System.out.println("recieved connection from " + c.getRemoteAddressTCP().getHostString());
 		//send map
-		server.sendToTCP(c.getID(), new MapData(map, tick));
+		server.sendToTCP(c.getID(), new MapData(map, tick, redSpawns, blueSpawns));
 		//add previous players
 		for (int i = 0; i < players.size(); i++) {
 			Player previous = players.get(i);
@@ -322,6 +324,11 @@ public class Game extends Listener{
 			}
 			if ( key == GLFW_KEY_SPACE && action == GLFW_PRESS )
 				fireProjectile(selectedUnitsId);
+			if( key == GLFW_KEY_BACKSLASH && action == GLFW_PRESS) {
+				for (Unit u : units) {
+					u.health -= 10;
+				}
+			}
 		});
 		//mouse clicks
 		glfwSetMouseButtonCallback (window, (window, button, action, mods) -> {
@@ -418,6 +425,10 @@ public class Game extends Listener{
 		double unitY = (random.nextInt(worldHeight - 64) + 32);
 		double unitAngle = random.nextInt(360);
 		Unit serverUnit = createUnit(newplayer.getId(), unitTeam, unitX, unitY, unitAngle, 1);
+		viewX = Math.min(worldWidth - cameraWidth * (double) gameScreenWidth / (double) WINDOW_WIDTH,
+				Math.max(0, unitX - cameraWidth * mapWidthScalar() /2));
+		viewY = Math.min(worldHeight - cameraHeight * (double) gameScreenHeight / (double) WINDOW_HEIGHT,
+				Math.max(0, unitY - cameraHeight * mapHeightScalar() /2));
 		red_players++;
 		units.add(serverUnit);
 		
@@ -452,6 +463,19 @@ public class Game extends Listener{
 					tiles[i][j].setTexture();
 					model.render(tiles[i][j].getVertices());
 				}
+			}
+			
+			//display spawnpoints
+			for (int i = 0; i < redSpawns.size(); i++) {
+				int[] current = redSpawns.get(i);
+				gametextures.loadTexture(14);
+				model.render(current[0] * tileLength, current[1] * tileLength, current[0] * tileLength + 128, current[1] * tileLength + 128);
+			}
+			
+			for (int i = 0; i < blueSpawns.size(); i++) {
+				int[] current = blueSpawns.get(i);
+				gametextures.loadTexture(15);
+				model.render(current[0] * tileLength, current[1] * tileLength, current[0] * tileLength + 128, current[1] * tileLength + 128);
 			}
 			
 			//display projectiles
@@ -559,9 +583,9 @@ public class Game extends Listener{
 				avgY /= selectedUnitsId.size();
 						
 				viewX = Math.min(worldWidth - cameraWidth * (double) gameScreenWidth / (double) WINDOW_WIDTH,
-						Math.max(0, avgX - cameraWidth/2));
+						Math.max(0, avgX - cameraWidth * mapWidthScalar() /2));
 				viewY = Math.min(worldHeight - cameraHeight * (double) gameScreenHeight / (double) WINDOW_HEIGHT,
-						Math.max(0, avgY - cameraHeight/2));
+						Math.max(0, avgY - cameraHeight * mapHeightScalar() /2));
 			}
 			
 			moveUnitsManual(selectedUnitsId, aPressed, wPressed, dPressed, sPressed);
@@ -700,11 +724,29 @@ public class Game extends Listener{
 		mapHeight = 20;
 		worldWidth = mapWidth * tileLength;
 		worldHeight = mapHeight * tileLength;
+		redSpawns.add(new int[] {2, mapHeight / 2 - 1}); //add red spawnpoint
+		blueSpawns.add(new int[] {mapWidth - 4, mapHeight / 2 - 1}); //add blue spawnpoint
 		map = new int[mapWidth][mapHeight];
 		for (int i = 0; i < mapWidth; i++) {
 			for (int j = 0; j < mapHeight; j++) {
 				map[i][j] = random.nextInt(4) + 1;
 			}
+		}
+		for (int i = 0; i < redSpawns.size(); i++) {
+			int[] current = redSpawns.get(i);
+			map[current[0]][current[1]] = 2;
+			map[current[0] + 1][current[1]] = 2;
+			map[current[0]][current[1] + 1] = 2;
+			map[current[0] + 1][current[1] + 1] = 2;
+			
+		}
+		for (int i = 0; i < blueSpawns.size(); i++) {
+			int[] current = blueSpawns.get(i);
+			map[current[0]][current[1]] = 2;
+			map[current[0] + 1][current[1]] = 2;
+			map[current[0]][current[1] + 1] = 2;
+			map[current[0] + 1][current[1] + 1] = 2;
+			
 		}
 		loadMap();
 	}
@@ -920,7 +962,18 @@ public class Game extends Listener{
 	public void respawnUnits() {
 		for(Unit u : units) {
 			if(u.getHealth() <= 0) {
-				u.setPosition((random.nextInt(worldWidth - 64) + 32), (random.nextInt(worldHeight - 64) + 32), random.nextInt(360));
+				int spawnindex;
+				if(u.getColor() == 1) {
+					spawnindex = random.nextInt(redSpawns.size());
+					u.setPosition(redSpawns.get(spawnindex)[0] * tileLength + random.nextInt(65) + 32
+							, redSpawns.get(spawnindex)[1] * tileLength + random.nextInt(65) + 32, random.nextInt(360));
+				}
+				else if(u.getColor() == 2) {
+					spawnindex = random.nextInt(blueSpawns.size());
+					u.setPosition(blueSpawns.get(spawnindex)[0] * tileLength + random.nextInt(65) + 32
+							, blueSpawns.get(spawnindex)[1] * tileLength + random.nextInt(65) + 32, random.nextInt(360));
+				}
+				
 				u.respawn();
 			}
 		}
@@ -953,6 +1006,15 @@ public class Game extends Listener{
 	public double getHeightScalar(){
 		return(double) cameraHeight / (double) WINDOW_HEIGHT;
 	}
+	
+	public double mapWidthScalar() {
+		return (double) gameScreenWidth / (double) WINDOW_WIDTH;
+	}
+	
+	public double mapHeightScalar() {
+		return (double) gameScreenHeight / (double) WINDOW_HEIGHT;
+	}
+	
 	
 	public void updateZoomLevel(boolean zoomOut){
 		DoubleBuffer xpos = BufferUtils.createDoubleBuffer(3);

@@ -16,6 +16,8 @@ public class GameTextures {
 	final static Texture mine_unarmed = new Texture("mine_unarmed.png");
 	final static Texture mine = new Texture("mine.png");
 	final static Texture daynightbar = new Texture("day_night_bar_v2.png");
+	final static Texture redspawn = new Texture("redspawn.png");
+	final static Texture bluespawn = new Texture("bluespawn.png");
 	
 	public void loadTexture(int id){
 		switch (id) {
@@ -41,6 +43,12 @@ public class GameTextures {
 			break;
 		case 13:
 			blueflag.bind();
+			break;
+		case 14:
+			redspawn.bind();
+			break;
+		case 15:
+			bluespawn.bind();
 			break;
 		case 20:
 			projectile.bind();
