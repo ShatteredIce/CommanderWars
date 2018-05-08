@@ -87,6 +87,8 @@ public class Game extends Listener{
 	
 	int gameState = 3;
 	
+	int teamColor = 1;
+	
 	int red_players = 0;
 	int blue_players = 0;
 	
@@ -181,10 +183,23 @@ public class Game extends Listener{
 		}
 		players.add(newplayer);
 		server.sendToAllTCP(new PlayerInfo(1, newplayer.getColor(), newplayer.getId()));
-		String unitTeam = "blue";
-		double unitX = (random.nextInt(worldWidth - 64) + 32);
-		double unitY = (random.nextInt(worldHeight - 64) + 32);
+		String unitTeam = "client";
+		
+		int spawnindex;
+		double unitX = 0;
+		double unitY = 0;
 		double unitAngle = random.nextInt(360);
+		if(newplayer.getColor() == 1) {
+			spawnindex = random.nextInt(redSpawns.size());
+			unitX = redSpawns.get(spawnindex)[0] * tileLength + random.nextInt(65) + 32;
+			unitY = redSpawns.get(spawnindex)[1] * tileLength + random.nextInt(65) + 32;
+		}
+		else if(newplayer.getColor() == 2) {
+			spawnindex = random.nextInt(blueSpawns.size());
+			unitX = blueSpawns.get(spawnindex)[0] * tileLength + random.nextInt(65) + 32;
+			unitY = blueSpawns.get(spawnindex)[1] * tileLength + random.nextInt(65) + 32;
+		}
+		
 //		System.out.println(unitId + " " + newplayer.getId());
 		units.add(createUnit(newplayer.getId(), unitTeam, unitX, unitY, unitAngle, newplayer.getColor()));
 //		System.out.println("finished recieving client " + c.getID());
@@ -421,14 +436,15 @@ public class Game extends Listener{
 		players.add(newplayer);
 		server.sendToAllTCP(new PlayerInfo(1, newplayer.getColor(), newplayer.getId()));
 		String unitTeam = "red";
-		double unitX = (random.nextInt(worldWidth - 64) + 32);
-		double unitY = (random.nextInt(worldHeight - 64) + 32);
+		int spawnindex = random.nextInt(redSpawns.size());
+		double unitX = redSpawns.get(spawnindex)[0] * tileLength + random.nextInt(65) + 32;
+		double unitY = redSpawns.get(spawnindex)[1] * tileLength + random.nextInt(65) + 32;
 		double unitAngle = random.nextInt(360);
 		Unit serverUnit = createUnit(newplayer.getId(), unitTeam, unitX, unitY, unitAngle, 1);
-		viewX = Math.min(worldWidth - cameraWidth * (double) gameScreenWidth / (double) WINDOW_WIDTH,
-				Math.max(0, unitX - cameraWidth * mapWidthScalar() /2));
-		viewY = Math.min(worldHeight - cameraHeight * (double) gameScreenHeight / (double) WINDOW_HEIGHT,
-				Math.max(0, unitY - cameraHeight * mapHeightScalar() /2));
+		viewX = Math.min(worldWidth - cameraWidth * mapWidthScalar(),
+				Math.max(0, (redSpawns.get(0)[0] + 1) * (tileLength) - cameraWidth * mapWidthScalar() /2));
+		viewY = Math.min(worldHeight - cameraHeight * mapHeightScalar(),
+				Math.max(0, (redSpawns.get(0)[1] + 1) * (tileLength) - cameraHeight * mapHeightScalar() /2));
 		red_players++;
 		units.add(serverUnit);
 		

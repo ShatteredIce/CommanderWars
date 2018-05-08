@@ -82,6 +82,7 @@ public class GameClient extends Listener{
 	ArrayList<int[]> blueSpawns = new ArrayList<>();
 	
 	int myPlayerId = -1;
+	int teamColor = -1;
 	
 	int gameState = 3;
 	
@@ -103,7 +104,7 @@ public class GameClient extends Listener{
 	//networking
 	static Client client;
 	//ip of server
-	static String ip = "manual";
+	static String ip = "localhost";
 	static int tcpPort = 27960;
 	static int udpPort = 27960;
 	
@@ -344,6 +345,21 @@ public class GameClient extends Listener{
 				players.add(new Player(packet.getColor(), packet.getId()));
 				client.sendTCP(new Message("recieved new player", packet.getId()));
 //				System.out.println("recieved player " + packet.getId());
+				if(packet.getId() == myPlayerId) {
+					teamColor = packet.getColor();
+					if(teamColor == 1) {
+						viewX = Math.min(worldWidth - cameraWidth * mapWidthScalar(),
+								Math.max(0, (redSpawns.get(0)[0] + 1) * (tileLength) - cameraWidth * mapWidthScalar() /2));
+						viewY = Math.min(worldHeight - cameraHeight * mapHeightScalar(),
+								Math.max(0, (redSpawns.get(0)[1] + 1) * (tileLength) - cameraHeight * mapHeightScalar() /2)); 
+					}
+					else if(teamColor == 2) {
+						viewX = Math.min(worldWidth - cameraWidth * mapWidthScalar(),
+								Math.max(0, (blueSpawns.get(0)[0] + 1) * (tileLength) - cameraWidth * mapWidthScalar() /2));
+						viewY = Math.min(worldHeight - cameraHeight * mapHeightScalar(),
+								Math.max(0, (blueSpawns.get(0)[1] + 1) * (tileLength) - cameraHeight * mapHeightScalar() /2)); 
+					}
+				}
 				break;
 			//delete player
 			case 2:
