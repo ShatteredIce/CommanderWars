@@ -6,9 +6,9 @@ public class Tile {
 	static int tileWidth = 64;
 	static int tileHeight = 64;
 	
-	final static Texture tex1 = new Texture("mountain.png");
-	final static Texture tex2 = new Texture("grass.png");
-	final static Texture tex3 = new Texture("forest.png");
+	final static Texture tex1 = new Texture("rock.png");
+	final static Texture tex2 = new Texture("grass_tiles.png");
+	final static Texture tex3 = new Texture("forest_tiles_v2.png");
 	final static Texture tex4 = new Texture("neutralflag.png");
 	final static Texture tex5 = new Texture("redflag.png");
 	final static Texture tex6 = new Texture("blueflag.png");

@@ -430,6 +430,7 @@ public class Game extends Listener{
 		
 		bitmap = new Bitmap();
 		
+		//create map and server unit
 		generateMap();
 //		loadUnits();
 		Player newplayer = new Player(1, serverPlayerId);
@@ -449,7 +450,7 @@ public class Game extends Listener{
 		units.add(serverUnit);
 		
 
-		
+		//rendering variables
 		final double[] textureCoords = {0, 0, 0, 1, 1, 0, 1, 1};
 		final int[] indices = {0, 1, 2, 2, 1, 3};
 		final double[] placeholder = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -532,27 +533,31 @@ public class Game extends Listener{
 			
 			projectTrueWindowCoordinates();
 			
+			//render sidebar
 			gametextures.loadTexture(10);
 			model.setTextureCoords(textureCoords);
 			model.render(gameScreenWidth, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 			
+			//render day/night bar
 			gametextures.loadTexture(11);
 			double shift = ((double) tick / (double) ticksPerDay) - 0.3;
 			model.setTextureCoords(new double[] {0 + shift, 0, 0 + shift, 1, 0.2 + shift, 0, 0.2 + shift, 1});
 			model.render(gameScreenWidth + 20, 40, gameScreenWidth + 180, 75);
 			
+			//render red flag and score
 			gametextures.loadTexture(12);
 			model.setTextureCoords(textureCoords);
 			model.render(gameScreenWidth + 10, 100, gameScreenWidth + 60, 150);
 			bitmap.drawNumber(gameScreenWidth + 70, 110, gameScreenWidth + 95, 140, red_score);
 			
-			
+			//render blue flag and score
 			gametextures.loadTexture(13);
 			model.render(gameScreenWidth + 10, 160, gameScreenWidth + 60, 210);
 			bitmap.drawNumber(gameScreenWidth + 70, 170, gameScreenWidth + 95, 200, blue_score);
 			
 			glDisable(GL_TEXTURE_2D);
 			
+			//update light level
 			tick++;
 			if(tick > ticksPerDay) {
 				tick = 0;
@@ -584,6 +589,7 @@ public class Game extends Listener{
 			checkProjectiles();
 			respawnUnits();
 			
+			//move camera to unit position if unitTracking is true
 			if(unitTracking && selectedUnitsId.size() != 0) {
 				double avgX = 0;
 				double avgY = 0;
@@ -632,6 +638,7 @@ public class Game extends Listener{
 		new Game().run();
 	}
 	
+	//loop through all capture points
 	public void updateCapturePoints() {
 		for (int i = 0; i < mapWidth; i++) {
 			for (int j = 0; j < mapHeight; j++) {
@@ -642,6 +649,7 @@ public class Game extends Listener{
 		}
 	}
 	
+	//check to see if capture points have changed teams
 	public void checkCapturePoint(int tileX, int tileY) {
 		int capturingColor = 0;
 		for (int i = 0; i < units.size(); i++) {
@@ -676,6 +684,7 @@ public class Game extends Listener{
 		}
 	}
 	
+	//move units if WASD keys are pressed
 	public void moveUnitsManual(ArrayList<Integer> movingUnits, boolean left, boolean up, boolean right, boolean down) {
 		if(movingUnits.isEmpty()) {
 			return;
@@ -707,6 +716,7 @@ public class Game extends Listener{
 		}
 	}
 	
+	//fire arrow projectile
 	public void fireProjectile(ArrayList<Integer> firingUnits) {
 		if(firingUnits.isEmpty()) {
 			return;
@@ -721,6 +731,7 @@ public class Game extends Listener{
 		}
 	}
 	
+	//lay trap weapon
 	public void setMine(ArrayList<Integer> firingUnits) {
 		if(firingUnits.isEmpty()) {
 			return;
@@ -735,6 +746,7 @@ public class Game extends Listener{
 		}
 	}
 	
+	//generate map
 	public void generateMap(){
 		mapWidth = 30;
 		mapHeight = 20;
@@ -743,11 +755,25 @@ public class Game extends Listener{
 		redSpawns.add(new int[] {2, mapHeight / 2 - 1}); //add red spawnpoint
 		blueSpawns.add(new int[] {mapWidth - 4, mapHeight / 2 - 1}); //add blue spawnpoint
 		map = new int[mapWidth][mapHeight];
+		//set a random terrain for each tile
 		for (int i = 0; i < mapWidth; i++) {
 			for (int j = 0; j < mapHeight; j++) {
-				map[i][j] = random.nextInt(4) + 1;
+				int seed = random.nextInt(10);
+				if(seed <= 1) {
+					map[i][j] = 1;
+				}
+				else if(seed <= 6) {
+					map[i][j] = 2;
+				}
+				else if(seed <= 8) {
+					map[i][j] = 3;
+				}
+				else if(seed <= 9) {
+					map[i][j] = 4;
+				}
 			}
 		}
+		//create red spawnpoint
 		for (int i = 0; i < redSpawns.size(); i++) {
 			int[] current = redSpawns.get(i);
 			map[current[0]][current[1]] = 2;
@@ -756,6 +782,7 @@ public class Game extends Listener{
 			map[current[0] + 1][current[1] + 1] = 2;
 			
 		}
+		//create blue spawnpoint
 		for (int i = 0; i < blueSpawns.size(); i++) {
 			int[] current = blueSpawns.get(i);
 			map[current[0]][current[1]] = 2;
@@ -767,6 +794,7 @@ public class Game extends Listener{
 		loadMap();
 	}
 	
+	//initalize tiles
 	public void loadMap(){
 		tiles = new Tile[mapWidth][mapHeight];
 		for (int x = 0; x < mapWidth; x++) {
@@ -975,6 +1003,7 @@ public class Game extends Listener{
 		}
 	}
 	
+	//respawn units with less than 0 health
 	public void respawnUnits() {
 		for(Unit u : units) {
 			if(u.getHealth() <= 0) {
@@ -995,12 +1024,14 @@ public class Game extends Listener{
 		}
 	}
 	
+	//calls the unit constructor
 	public Unit createUnit(int newownerid, String newteam, double newx, double newy, double newangle, int newcolor){
 		Unit u = new Unit(unitId, newownerid, newteam, newx, newy, newangle, newcolor, new int[] {0, worldWidth, 0, worldHeight});
 		unitId++;
 		return u;
 	}
 	
+	//screen projection based on relative camera coordinates
 	public void projectRelativeCameraCoordinates(){
 		glMatrixMode(GL_PROJECTION);
         glLoadIdentity(); // Resets any previous projection matrices
@@ -1008,6 +1039,7 @@ public class Game extends Listener{
         glMatrixMode(GL_MODELVIEW);
 	}
 	
+	//screen projection based on true window coordinates
 	public void projectTrueWindowCoordinates(){
 		glMatrixMode(GL_PROJECTION);
         glLoadIdentity(); // Resets any previous projection matrices
@@ -1015,6 +1047,7 @@ public class Game extends Listener{
         glMatrixMode(GL_MODELVIEW);
 	}
 	
+	//scalars to help calculation
 	public double getWidthScalar(){
 		return(double) cameraWidth / (double) WINDOW_WIDTH;
 	}
@@ -1032,6 +1065,7 @@ public class Game extends Listener{
 	}
 	
 	
+	//zoom camera in or out
 	public void updateZoomLevel(boolean zoomOut){
 		DoubleBuffer xpos = BufferUtils.createDoubleBuffer(3);
 		DoubleBuffer ypos = BufferUtils.createDoubleBuffer(3);
