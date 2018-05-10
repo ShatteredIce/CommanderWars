@@ -99,7 +99,7 @@ public class Game extends Listener{
 	int blue_flags = 0;
 	int red_score = 0;
 	int blue_score = 0;
-	int pointsToWin = 10;
+	int pointsToWin = 1000;
 	
 	boolean aPressed = false;
 	boolean wPressed = false;
@@ -581,8 +581,15 @@ public class Game extends Listener{
 				bitmap.drawNumber(gameScreenWidth + 70, 170, gameScreenWidth + 95, 200, blue_score);
 				
 				//render hp bar and unit icon
+				Unit selected = null;
 				if(selectedUnitsId.size() == 1) {
-					Unit selected = units.get(selectedUnitsId.get(0));
+					for (Unit u : units) {
+						if(u.getId() == selectedUnitsId.get(0)) {
+							selected = u;
+							break;
+						}
+					}
+					selected = units.get(selectedUnitsId.get(0));
 					gametextures.loadTexture(16);
 					model.render(gameScreenWidth + 25, 240, gameScreenWidth + 175, 250);
 					gametextures.loadTexture(17);

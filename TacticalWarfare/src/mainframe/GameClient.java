@@ -10,6 +10,7 @@ import org.lwjgl.system.*;
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.Listener;
+import com.esotericsoftware.kryonet.Server;
 
 import packets.KeyPress;
 import packets.MapData;
@@ -119,7 +120,7 @@ public class GameClient extends Listener{
 	public void run() throws IOException {
 		
 		//create client
-		client = new Client();
+		client = new Client(32768, 32768);
 		//register packets
 		client.getKryo().register(java.util.ArrayList.class);
 		client.getKryo().register(double[].class);
@@ -551,8 +552,14 @@ public class GameClient extends Listener{
 				bitmap.drawNumber(gameScreenWidth + 70, 170, gameScreenWidth + 95, 200, blue_score);
 				
 				//render hp bar and unit icon
+				UnitInfo selected = null;
 				if(selectedUnitsId.size() == 1) {
-					UnitInfo selected = units.get(selectedUnitsId.get(0));
+					for (UnitInfo u : units) {
+						if(u.getId() == selectedUnitsId.get(0)) {
+							selected = u;
+							break;
+						}
+					}
 					gametextures.loadTexture(16);
 					model.render(gameScreenWidth + 25, 240, gameScreenWidth + 175, 250);
 					gametextures.loadTexture(17);
