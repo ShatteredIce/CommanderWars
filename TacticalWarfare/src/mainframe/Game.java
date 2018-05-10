@@ -574,6 +574,17 @@ public class Game extends Listener{
 			model.render(gameScreenWidth + 10, 160, gameScreenWidth + 60, 210);
 			bitmap.drawNumber(gameScreenWidth + 70, 170, gameScreenWidth + 95, 200, blue_score);
 			
+			//render hp bar and unit icon
+			if(selectedUnitsId.size() == 1) {
+				Unit selected = units.get(selectedUnitsId.get(0));
+				gametextures.loadTexture(16);
+				model.render(gameScreenWidth + 25, 240, gameScreenWidth + 175, 250);
+				gametextures.loadTexture(17);
+				model.render(gameScreenWidth + 25, 240, (int) (gameScreenWidth + 25 + (150 * (double) selected.getHealth()/(double) selected.getMaxHealth())), 250);
+				gametextures.loadTexture(selected.getColor());
+				model.render(gameScreenWidth + 65, 260, gameScreenWidth + 135, 295);
+			}
+			
 			//render return to base button
 			if(teamColor == 1) {
 				gametextures.loadTexture(14);
@@ -587,7 +598,9 @@ public class Game extends Listener{
 			
 			updateLightLevel();
 			
-			updateScore();
+			if(tick % 50 == 0) {
+				updateScore();
+			}
 			
 			glColor4f(0f, 0f, 0f, lightLevel);
 			
@@ -598,6 +611,10 @@ public class Game extends Listener{
 			
 			checkProjectiles();
 			respawnUnits();
+			
+			if(tick % 100 == 0) {
+				healUnits();
+			}
 			
 			//move camera to unit position if unitTracking is true
 			if(unitTracking && selectedUnitsId.size() != 0) {
@@ -1062,6 +1079,32 @@ public class Game extends Listener{
 		}
 	}
 	
+	//heals units at friendly spawn areas
+	public void healUnits() {
+		for (int i = 0; i < redSpawns.size(); i++) {
+			for (Unit u : units) {
+				if(u.getColor() == 1) { //red unit
+					int[] spawnPos = redSpawns.get(i);
+					if((u.getX() > spawnPos[0] * tileLength) && (u.getX() < (spawnPos[0] + 2) * tileLength) 
+							&& (u.getY() > spawnPos[1] * tileLength) && (u.getY() < (spawnPos[1] + 2) * tileLength)) {
+						u.setHealth(Math.min(u.getHealth() + 1, u.getMaxHealth()));
+					}
+				}
+			}
+		}
+		for (int i = 0; i < blueSpawns.size(); i++) {
+			for (Unit u : units) {
+				if(u.getColor() == 2) { //blue unit
+					int[] spawnPos = blueSpawns.get(i);
+					if((u.getX() > spawnPos[0] * tileLength) && (u.getX() < (spawnPos[0] + 2) * tileLength) 
+							&& (u.getY() > spawnPos[1] * tileLength) && (u.getY() < (spawnPos[1] + 2) * tileLength)) {
+						u.setHealth(Math.min(u.getHealth() + 1, u.getMaxHealth()));
+					}
+				}
+			}
+		}
+	}
+	
 	//calls the unit constructor
 	public Unit createUnit(int newownerid, String newteam, double newx, double newy, double newangle, int newcolor){
 		Unit u = new Unit(unitId, newownerid, newteam, newx, newy, newangle, newcolor, new int[] {0, worldWidth, 0, worldHeight});
@@ -1225,10 +1268,8 @@ public class Game extends Listener{
 	
 	//updates score and checks for win condition
 	public void updateScore() {
-		if(tick % 50 == 0) {
-			red_score += red_flags;
-			blue_score += blue_flags;
-		}
+		red_score += red_flags;
+		blue_score += blue_flags;
 		//red team wins!
 		if(red_score >= pointsToWin && red_score > blue_score) {
 			gameState = 3;

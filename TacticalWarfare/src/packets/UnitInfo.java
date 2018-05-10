@@ -9,14 +9,17 @@ public class UnitInfo {
 	double unitY;
 	double angle;
 	int color;
+	int health;
 	double[] vertices;
 	double[] outlineVertices;
+	
+	private int max_health = 10;
 	
 	public UnitInfo(){
 		
 	}
 	
-	public UnitInfo(int newid, int newownerid, String myteam, double x, double y, double newangle, int newcolor, double[] newvertices, double[] newoutlinevertices){
+	public UnitInfo(int newid, int newownerid, String myteam, double x, double y, double newangle, int newcolor, int newhealth, double[] newvertices, double[] newoutlinevertices){
 		id = newid;
 		ownerid = newownerid;
 		team = myteam;
@@ -24,6 +27,7 @@ public class UnitInfo {
 		unitY = y;
 		angle = newangle;
 		color = newcolor;
+		health = newhealth;
 		vertices = newvertices;
 		outlineVertices = newoutlinevertices;
 	}
@@ -66,6 +70,14 @@ public class UnitInfo {
 	
 	public double[] getOutlineVertices(){
 		return outlineVertices;
+	}
+	
+	public int getHealth() {
+		return health;
+	}
+	
+	public int getMaxHealth() {
+		return max_health;
 	}
 
 

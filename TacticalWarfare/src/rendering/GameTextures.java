@@ -9,7 +9,7 @@ public class GameTextures {
 	final static Texture redunit = new Texture("redunit.png");
 	final static Texture blueunit = new Texture("blueunit.png");
 	final static Texture unitglow = new Texture("unitglow.png");
-	final static Texture border = new Texture("border.png");
+	final static Texture border = new Texture("lightgray.png");
 	final static Texture redflag = new Texture("redflag.png");
 	final static Texture blueflag = new Texture("blueflag.png");
 	final static Texture projectile = new Texture("projectile_test.png");
@@ -18,6 +18,8 @@ public class GameTextures {
 	final static Texture daynightbar = new Texture("day_night_bar_v2.png");
 	final static Texture redspawn = new Texture("redspawn.png");
 	final static Texture bluespawn = new Texture("bluespawn.png");
+	final static Texture hpred = new Texture("red.png");
+	final static Texture hpgreen = new Texture("lightgreen.png");
 	
 	public void loadTexture(int id){
 		switch (id) {
@@ -49,6 +51,12 @@ public class GameTextures {
 			break;
 		case 15:
 			bluespawn.bind();
+			break;
+		case 16:
+			hpred.bind();
+			break;
+		case 17:
+			hpgreen.bind();
 			break;
 		case 20:
 			projectile.bind();

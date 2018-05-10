@@ -539,6 +539,17 @@ public class GameClient extends Listener{
 			model.render(gameScreenWidth + 10, 160, gameScreenWidth + 60, 210);
 			bitmap.drawNumber(gameScreenWidth + 70, 170, gameScreenWidth + 95, 200, blue_score);
 			
+			//render hp bar and unit icon
+			if(selectedUnitsId.size() == 1) {
+				UnitInfo selected = units.get(selectedUnitsId.get(0));
+				gametextures.loadTexture(16);
+				model.render(gameScreenWidth + 25, 240, gameScreenWidth + 175, 250);
+				gametextures.loadTexture(17);
+				model.render(gameScreenWidth + 25, 240, (int) (gameScreenWidth + 25 + (150 * (double) selected.getHealth()/(double) selected.getMaxHealth())), 250);
+				gametextures.loadTexture(selected.getColor());
+				model.render(gameScreenWidth + 65, 260, gameScreenWidth + 135, 295);
+			}
+			
 			//render return to base button
 			if(teamColor == 1) {
 				gametextures.loadTexture(14);
