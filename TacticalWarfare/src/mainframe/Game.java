@@ -85,8 +85,10 @@ public class Game extends Listener{
 	boolean clientRecieved = false;
 	boolean spacePressed = false;
 	
+	//state variables
 	int gameState = 1;
 	boolean gameStateChanged = false;
+	boolean staticFrame = false;
 	
 	int teamColor = 1;
 	
@@ -97,7 +99,7 @@ public class Game extends Listener{
 	int blue_flags = 0;
 	int red_score = 0;
 	int blue_score = 0;
-	int pointsToWin = 100000;
+	int pointsToWin = 10;
 	
 	boolean aPressed = false;
 	boolean wPressed = false;
@@ -109,7 +111,7 @@ public class Game extends Listener{
 	
 	// The window handle
 	private long window;
-	
+		
 	static GameLogic gamelogic = new GameLogic();
 	static GameTextures gametextures;
 	
@@ -350,6 +352,9 @@ public class Game extends Listener{
 			if ( key == GLFW_KEY_SPACE && action == GLFW_PRESS )
 				fireProjectile(selectedUnitsId);
 			if( key == GLFW_KEY_BACKSLASH && action == GLFW_PRESS) {
+				resetMap();
+			}
+			if( key == GLFW_KEY_0 && action == GLFW_PRESS) {
 				for (Unit u : units) {
 					u.health -= 10;
 				}
@@ -479,185 +484,208 @@ public class Game extends Listener{
 		// Run the rendering loop until the user has attempted to close
 		// the window or has pressed the ESCAPE key.
 		while ( !glfwWindowShouldClose(window) ) {
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
 
 			// Poll for window events. The key callback above will only be
 			// invoked during this call.
 			glfwPollEvents();
-			
-			updateCapturePoints();
 						
 			updateClients();
 			
 			glEnable(GL_TEXTURE_2D);
 			
-			projectRelativeCameraCoordinates();
+			if(gameState == 1) {
+				
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
 			
-			//display tiles
-			for (int i = 0; i < tiles.length; i++) {
-				for (int j = 0; j < tiles[0].length; j++) {
-					tiles[i][j].setTexture();
-					model.render(tiles[i][j].getVertices());
-				}
-			}
-			
-			//display spawnpoints
-			for (int i = 0; i < redSpawns.size(); i++) {
-				int[] current = redSpawns.get(i);
-				gametextures.loadTexture(14);
-				model.render(current[0] * tileLength, current[1] * tileLength, current[0] * tileLength + 128, current[1] * tileLength + 128);
-			}
-			
-			for (int i = 0; i < blueSpawns.size(); i++) {
-				int[] current = blueSpawns.get(i);
-				gametextures.loadTexture(15);
-				model.render(current[0] * tileLength, current[1] * tileLength, current[0] * tileLength + 128, current[1] * tileLength + 128);
-			}
-			
-			//display projectiles
-			for (int p = 0; p < projectiles.size(); p++) {
-				Projectile current = projectiles.get(p);
-				if(current.setPoints() == false){
-					projectiles.remove(p);
-					p--;
-				}
-				else {
-					gametextures.loadTexture(current.getTexId());
-					model.render(current.getVertices());
-					
-				}
-			}
-			
-			//display units
-			for (Unit u : units) {
-				int[] tile = currentTile(u.getX(),u.getY());
-				if(tile[0] != -1) {
-					u.setTerrainMovement(tiles[tile[0]][tile[1]].getMovement());
-				}
-				u.update();
-				gametextures.loadTexture(u.getColor());
-				model.render(u.getVertices());
-			}
-			
-			
-			//display glow on selected units
-			gametextures.loadTexture(0);
-			for (Unit u : units) {
-				for (int i = 0; i < selectedUnitsId.size(); i++) {
-					if(selectedUnitsId.get(i) == u.getId()){
-						model.render(u.getOutlineVertices());
+				projectRelativeCameraCoordinates();
+				
+				//display tiles
+				for (int i = 0; i < tiles.length; i++) {
+					for (int j = 0; j < tiles[0].length; j++) {
+						tiles[i][j].setTexture();
+						model.render(tiles[i][j].getVertices());
 					}
 				}
-			}
-			
-			projectTrueWindowCoordinates();
-			
-			//render sidebar
-			gametextures.loadTexture(10);
-			model.setTextureCoords(textureCoords);
-			model.render(gameScreenWidth, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-			
-			//render day/night bar
-			gametextures.loadTexture(11);
-			double shift = ((double) tick / (double) ticksPerDay) - 0.3;
-			model.setTextureCoords(new double[] {0 + shift, 0, 0 + shift, 1, 0.2 + shift, 0, 0.2 + shift, 1});
-			model.render(gameScreenWidth + 20, 40, gameScreenWidth + 180, 75);
-			
-			//render red flag and score
-			gametextures.loadTexture(12);
-			model.setTextureCoords(textureCoords);
-			model.render(gameScreenWidth + 10, 100, gameScreenWidth + 60, 150);
-			bitmap.drawNumber(gameScreenWidth + 70, 110, gameScreenWidth + 95, 140, red_score);
-			
-			//render blue flag and score
-			gametextures.loadTexture(13);
-			model.render(gameScreenWidth + 10, 160, gameScreenWidth + 60, 210);
-			bitmap.drawNumber(gameScreenWidth + 70, 170, gameScreenWidth + 95, 200, blue_score);
-			
-			//render hp bar and unit icon
-			if(selectedUnitsId.size() == 1) {
-				Unit selected = units.get(selectedUnitsId.get(0));
-				gametextures.loadTexture(16);
-				model.render(gameScreenWidth + 25, 240, gameScreenWidth + 175, 250);
-				gametextures.loadTexture(17);
-				model.render(gameScreenWidth + 25, 240, (int) (gameScreenWidth + 25 + (150 * (double) selected.getHealth()/(double) selected.getMaxHealth())), 250);
-				gametextures.loadTexture(selected.getColor());
-				model.render(gameScreenWidth + 65, 260, gameScreenWidth + 135, 295);
-			}
-			
-			//render return to base button
-			if(teamColor == 1) {
-				gametextures.loadTexture(14);
-			}
-			else if(teamColor == 2) {
-				gametextures.loadTexture(15);
-			}
-			model.render(gameScreenWidth + 10, 570, gameScreenWidth + 60, 620);
-			
-			glDisable(GL_TEXTURE_2D);
-			
-			updateLightLevel();
-			
-			if(tick % 50 == 0) {
-				updateScore();
-			}
-			
-			glColor4f(0f, 0f, 0f, lightLevel);
-			
-			gametextures.loadTexture(-1);
-			model.render(new double[] {0, 0, 0, gameScreenHeight, gameScreenWidth, 0, gameScreenWidth, gameScreenHeight});
-			
-			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-			
-			checkProjectiles();
-			respawnUnits();
-			
-			if(tick % 100 == 0) {
-				healUnits();
-			}
-			
-			//move camera to unit position if unitTracking is true
-			if(unitTracking && selectedUnitsId.size() != 0) {
-				double avgX = 0;
-				double avgY = 0;
+				
+				//display spawnpoints
+				for (int i = 0; i < redSpawns.size(); i++) {
+					int[] current = redSpawns.get(i);
+					gametextures.loadTexture(14);
+					model.render(current[0] * tileLength, current[1] * tileLength, current[0] * tileLength + 128, current[1] * tileLength + 128);
+				}
+				
+				for (int i = 0; i < blueSpawns.size(); i++) {
+					int[] current = blueSpawns.get(i);
+					gametextures.loadTexture(15);
+					model.render(current[0] * tileLength, current[1] * tileLength, current[0] * tileLength + 128, current[1] * tileLength + 128);
+				}
+				
+				//display projectiles
+				for (int p = 0; p < projectiles.size(); p++) {
+					Projectile current = projectiles.get(p);
+					if(current.setPoints() == false){
+						projectiles.remove(p);
+						p--;
+					}
+					else {
+						gametextures.loadTexture(current.getTexId());
+						model.render(current.getVertices());
+						
+					}
+				}
+				
+				//display units
+				for (Unit u : units) {
+					int[] tile = currentTile(u.getX(),u.getY());
+					if(tile[0] != -1) {
+						u.setTerrainMovement(tiles[tile[0]][tile[1]].getMovement());
+					}
+					u.update();
+					gametextures.loadTexture(u.getColor());
+					model.render(u.getVertices());
+				}
+				
+				
+				//display glow on selected units
+				gametextures.loadTexture(0);
 				for (Unit u : units) {
 					for (int i = 0; i < selectedUnitsId.size(); i++) {
 						if(selectedUnitsId.get(i) == u.getId()){
-							avgX += u.getX();
-							avgY += u.getY();
+							model.render(u.getOutlineVertices());
 						}
 					}
 				}
-				avgX /= selectedUnitsId.size();
-				avgY /= selectedUnitsId.size();
-						
-				viewX = Math.min(worldWidth - cameraWidth * (double) gameScreenWidth / (double) WINDOW_WIDTH,
-						Math.max(0, avgX - cameraWidth * mapWidthScalar() /2));
-				viewY = Math.min(worldHeight - cameraHeight * (double) gameScreenHeight / (double) WINDOW_HEIGHT,
-						Math.max(0, avgY - cameraHeight * mapHeightScalar() /2));
+				
+				projectTrueWindowCoordinates();
+				
+				//render sidebar
+				gametextures.loadTexture(10);
+				model.setTextureCoords(textureCoords);
+				model.render(gameScreenWidth, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+				
+				//render day/night bar
+				gametextures.loadTexture(11);
+				double shift = ((double) tick / (double) ticksPerDay) - 0.3;
+				model.setTextureCoords(new double[] {0 + shift, 0, 0 + shift, 1, 0.2 + shift, 0, 0.2 + shift, 1});
+				model.render(gameScreenWidth + 20, 40, gameScreenWidth + 180, 75);
+				
+				//render red flag and score
+				gametextures.loadTexture(12);
+				model.setTextureCoords(textureCoords);
+				model.render(gameScreenWidth + 10, 100, gameScreenWidth + 60, 150);
+				bitmap.drawNumber(gameScreenWidth + 70, 110, gameScreenWidth + 95, 140, red_score);
+				
+				//render blue flag and score
+				gametextures.loadTexture(13);
+				model.render(gameScreenWidth + 10, 160, gameScreenWidth + 60, 210);
+				bitmap.drawNumber(gameScreenWidth + 70, 170, gameScreenWidth + 95, 200, blue_score);
+				
+				//render hp bar and unit icon
+				if(selectedUnitsId.size() == 1) {
+					Unit selected = units.get(selectedUnitsId.get(0));
+					gametextures.loadTexture(16);
+					model.render(gameScreenWidth + 25, 240, gameScreenWidth + 175, 250);
+					gametextures.loadTexture(17);
+					model.render(gameScreenWidth + 25, 240, (int) (gameScreenWidth + 25 + (150 * (double) selected.getHealth()/(double) selected.getMaxHealth())), 250);
+					gametextures.loadTexture(selected.getColor());
+					model.render(gameScreenWidth + 65, 260, gameScreenWidth + 135, 295);
+				}
+				
+				//render return to base button
+				if(teamColor == 1) {
+					gametextures.loadTexture(14);
+				}
+				else if(teamColor == 2) {
+					gametextures.loadTexture(15);
+				}
+				model.render(gameScreenWidth + 10, 570, gameScreenWidth + 60, 620);
+				
+				glDisable(GL_TEXTURE_2D);
+				
+				updateLightLevel();
+				
+				if(tick % 50 == 0) {
+					checkWin();
+					updateScore();
+				}
+				
+				glColor4f(0f, 0f, 0f, lightLevel);
+				
+				gametextures.loadTexture(-1);
+				model.render(new double[] {0, 0, 0, gameScreenHeight, gameScreenWidth, 0, gameScreenWidth, gameScreenHeight});
+				
+				glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+				
+				checkProjectiles();
+				updateCapturePoints();
+				resetUnits(false);
+				
+				if(tick % 100 == 0) {
+					healUnits();
+				}
+				
+				//move camera to unit position if unitTracking is true
+				if(unitTracking && selectedUnitsId.size() != 0) {
+					double avgX = 0;
+					double avgY = 0;
+					for (Unit u : units) {
+						for (int i = 0; i < selectedUnitsId.size(); i++) {
+							if(selectedUnitsId.get(i) == u.getId()){
+								avgX += u.getX();
+								avgY += u.getY();
+							}
+						}
+					}
+					avgX /= selectedUnitsId.size();
+					avgY /= selectedUnitsId.size();
+							
+					viewX = Math.min(worldWidth - cameraWidth * (double) gameScreenWidth / (double) WINDOW_WIDTH,
+							Math.max(0, avgX - cameraWidth * mapWidthScalar() /2));
+					viewY = Math.min(worldHeight - cameraHeight * (double) gameScreenHeight / (double) WINDOW_HEIGHT,
+							Math.max(0, avgY - cameraHeight * mapHeightScalar() /2));
+				}
+				
+				moveUnitsManual(selectedUnitsId, aPressed, wPressed, dPressed, sPressed);
+				
+				//move camera
+				if (panLeft) {
+					viewX = Math.max(0, viewX - cameraWidth / 30);
+					unitTracking = false;
+				}
+				if (panRight) {
+					viewX = Math.min(worldWidth - cameraWidth * (double) gameScreenWidth / (double) WINDOW_WIDTH, viewX + cameraWidth / 30);
+					unitTracking = false;
+				}
+				if (panDown) {
+					viewY = Math.min(worldHeight - cameraHeight * (double) gameScreenHeight / (double) WINDOW_HEIGHT, viewY + cameraHeight / 30);
+					unitTracking = false;
+				}
+				if (panUp) {
+					viewY = Math.max(0, viewY - cameraHeight / 30);
+					unitTracking = false;
+				}
+				
+				glfwSwapBuffers(window); // swap the color buffers
 			}
 			
-			moveUnitsManual(selectedUnitsId, aPressed, wPressed, dPressed, sPressed);
-			
-			//move camera
-			if (panLeft) {
-				viewX = Math.max(0, viewX - cameraWidth / 30);
-				unitTracking = false;
+			else if(gameState == 3) {
+				if(!staticFrame) {
+					projectTrueWindowCoordinates();
+					gametextures.loadTexture(10);
+					model.render(100, 150, 540, 450);
+					glfwSwapBuffers(window);
+					staticFrame = true;
+				}
 			}
-			if (panRight) {
-				viewX = Math.min(worldWidth - cameraWidth * (double) gameScreenWidth / (double) WINDOW_WIDTH, viewX + cameraWidth / 30);
-				unitTracking = false;
+			else if(gameState == 4) {
+				if(!staticFrame) {
+					projectTrueWindowCoordinates();
+					gametextures.loadTexture(10);
+					model.render(100, 150, 540, 450);
+					glfwSwapBuffers(window);
+					staticFrame = true;
+				}
 			}
-			if (panDown) {
-				viewY = Math.min(worldHeight - cameraHeight * (double) gameScreenHeight / (double) WINDOW_HEIGHT, viewY + cameraHeight / 30);
-				unitTracking = false;
-			}
-			if (panUp) {
-				viewY = Math.max(0, viewY - cameraHeight / 30);
-				unitTracking = false;
-			}
-			
-			glfwSwapBuffers(window); // swap the color buffers
 		}
 	}
 
@@ -1058,10 +1086,11 @@ public class Game extends Listener{
 		}
 	}
 	
-	//respawn units with less than 0 health
-	public void respawnUnits() {
+	//respawn units with less than 0 health if resetAll is false
+	//resets all units to spawn areas if resetAll is true
+	public void resetUnits(boolean resetAll) {
 		for(Unit u : units) {
-			if(u.getHealth() <= 0) {
+			if(resetAll || u.getHealth() <= 0) {
 				int spawnindex;
 				if(u.getColor() == 1) {
 					spawnindex = random.nextInt(redSpawns.size());
@@ -1078,6 +1107,7 @@ public class Game extends Listener{
 			}
 		}
 	}
+	
 	
 	//heals units at friendly spawn areas
 	public void healUnits() {
@@ -1266,10 +1296,14 @@ public class Game extends Listener{
 		}
 	}
 	
-	//updates score and checks for win condition
+	//updates score 
 	public void updateScore() {
 		red_score += red_flags;
 		blue_score += blue_flags;
+	}
+	
+	//check if one team has met the victory condition
+	public void checkWin() {
 		//red team wins!
 		if(red_score >= pointsToWin && red_score > blue_score) {
 			gameState = 3;
@@ -1280,6 +1314,27 @@ public class Game extends Listener{
 			gameState = 4;
 			gameStateChanged = true;
 		}
+	}
+	
+	//reset the map
+	public void resetMap() {
+		redSpawns.clear();
+		blueSpawns.clear();
+		projectiles.clear();
+		red_score = 0;
+		blue_score = 0;
+		red_flags = 0;
+		blue_flags = 0;
+		tick = 0;
+		gameState = 1;
+		staticFrame = false;
+		generateMap();
+		resetUnits(true);
+		viewX = Math.min(worldWidth - cameraWidth * mapWidthScalar(),
+				Math.max(0, (redSpawns.get(0)[0] + 1) * (tileLength) - cameraWidth * mapWidthScalar() /2));
+		viewY = Math.min(worldHeight - cameraHeight * mapHeightScalar(),
+				Math.max(0, (redSpawns.get(0)[1] + 1) * (tileLength) - cameraHeight * mapHeightScalar() /2));
+		server.sendToAllTCP(new MapData(map, gameState, tick, redSpawns, blueSpawns));
 	}
 
 }

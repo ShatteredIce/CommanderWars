@@ -85,6 +85,7 @@ public class GameClient extends Listener{
 	int teamColor = -1;
 	
 	int gameState = 1;
+	boolean staticFrame = false;
 	
 	int red_score = 0;
 	int blue_score = 0;
@@ -410,6 +411,9 @@ public class GameClient extends Listener{
 			blueSpawns = packet.getBlueSpawns();
 			gameState = packet.getState();
 			tick = packet.getTick();
+			//clear data from previous game
+			staticFrame = false;
+			projectiles.clear();
 		}
 		else if(obj instanceof TileInfo) {
 			TileInfo info = (TileInfo) obj;
@@ -462,7 +466,6 @@ public class GameClient extends Listener{
 		// Run the rendering loop until the user has attempted to close
 		// the window or has pressed the ESCAPE key.
 		while ( !glfwWindowShouldClose(window) ) {
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
 
 			// Poll for window events. The key callback above will only be
 			// invoked during this call.
@@ -470,166 +473,188 @@ public class GameClient extends Listener{
 			
 			glEnable(GL_TEXTURE_2D);
 			
-			projectRelativeCameraCoordinates();
-					
-			//display tiles
-			for (int i = 0; i < tiles.length; i++) {
-				for (int j = 0; j < tiles[0].length; j++) {
-					tiles[i][j].setTexture();
-					model.render(tiles[i][j].getVertices());
-				}
-			}
-			
-			//display spawnpoints
-			for (int i = 0; i < redSpawns.size(); i++) {
-				int[] current = redSpawns.get(i);
-				gametextures.loadTexture(14);
-				model.render(current[0] * tileLength, current[1] * tileLength, current[0] * tileLength + 128, current[1] * tileLength + 128);
-			}
-			
-			for (int i = 0; i < blueSpawns.size(); i++) {
-				int[] current = blueSpawns.get(i);
-				gametextures.loadTexture(15);
-				model.render(current[0] * tileLength, current[1] * tileLength, current[0] * tileLength + 128, current[1] * tileLength + 128);
-			}
-			
-			//display projectiles
-			for (ProjectileInfo p : projectiles) {
-				gametextures.loadTexture(p.getTexId());
-				model.render(p.getVertices());
-			}
-
-			//display units
-			for (UnitInfo u : units) {
-				gametextures.loadTexture(u.getColor());
-				model.render(u.getVertices());
-			}
-			
-			//display glow on selected units
-			gametextures.loadTexture(0);
-			for (UnitInfo u : units) {
-				for (int i = 0; i < selectedUnitsId.size(); i++) {
-					if(selectedUnitsId.get(i) == u.getId()){
-						model.render(u.getOutlineVertices());
+			if(gameState == 1) {
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
+				
+				projectRelativeCameraCoordinates();
+						
+				//display tiles
+				for (int i = 0; i < tiles.length; i++) {
+					for (int j = 0; j < tiles[0].length; j++) {
+						tiles[i][j].setTexture();
+						model.render(tiles[i][j].getVertices());
 					}
 				}
-			}
-			
-			projectTrueWindowCoordinates();
-			
-			//render sidebar
-			gametextures.loadTexture(10);
-			model.setTextureCoords(textureCoords);
-			model.render(gameScreenWidth, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-			
-			//render day/night bar
-			gametextures.loadTexture(11);
-			double shift = ((double) tick / (double) ticksPerDay) - 0.3;
-			model.setTextureCoords(new double[] {0 + shift, 0, 0 + shift, 1, 0.2 + shift, 0, 0.2 + shift, 1});
-			model.render(gameScreenWidth + 20, 40, gameScreenWidth + 180, 75);
-			
-			//render red flag and score
-			gametextures.loadTexture(12);
-			model.setTextureCoords(textureCoords);
-			model.render(gameScreenWidth + 10, 100, gameScreenWidth + 60, 150);
-			bitmap.drawNumber(gameScreenWidth + 70, 110, gameScreenWidth + 95, 140, red_score);
-			
-			//render blue flag and score
-			gametextures.loadTexture(13);
-			model.render(gameScreenWidth + 10, 160, gameScreenWidth + 60, 210);
-			bitmap.drawNumber(gameScreenWidth + 70, 170, gameScreenWidth + 95, 200, blue_score);
-			
-			//render hp bar and unit icon
-			if(selectedUnitsId.size() == 1) {
-				UnitInfo selected = units.get(selectedUnitsId.get(0));
-				gametextures.loadTexture(16);
-				model.render(gameScreenWidth + 25, 240, gameScreenWidth + 175, 250);
-				gametextures.loadTexture(17);
-				model.render(gameScreenWidth + 25, 240, (int) (gameScreenWidth + 25 + (150 * (double) selected.getHealth()/(double) selected.getMaxHealth())), 250);
-				gametextures.loadTexture(selected.getColor());
-				model.render(gameScreenWidth + 65, 260, gameScreenWidth + 135, 295);
-			}
-			
-			//render return to base button
-			if(teamColor == 1) {
-				gametextures.loadTexture(14);
-			}
-			else if(teamColor == 2) {
-				gametextures.loadTexture(15);
-			}
-			model.render(gameScreenWidth + 10, 570, gameScreenWidth + 60, 620);
-			
-			glDisable(GL_TEXTURE_2D);
-			
-			//send server movement 
-			if(sentMovement == false) {
-				client.sendTCP(new UnitMovement(selectedUnitsId, aPressed, wPressed, dPressed, sPressed));
-				sentMovement = true;
-			}
-			
-			tick++;
-			if(tick > ticksPerDay) {
-				tick = 0;
-			}
-			else if(tick < 2000) {
-				lightLevel = Math.abs(0.5f - (float) tick/(ticksPerDay/6));
-			}
-			else if(tick < 12000) {
-				lightLevel = 0;
-			}
-			else if(tick < 14000) {
-				lightLevel = ((float) tick-(ticksPerDay/2)) /(ticksPerDay/6);
-			}
-			else {
-				lightLevel = 0.5f;
-			}
-			
-			glColor4f(0f, 0f, 0f, lightLevel);
-			
-			gametextures.loadTexture(-1);
-			model.render(new double[] {0, 0, 0, gameScreenHeight, gameScreenWidth, 0, gameScreenWidth, gameScreenHeight});
-			
-			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-			
-			if(unitTracking && selectedUnitsId.size() != 0) {
-				double avgX = 0;
-				double avgY = 0;
+				
+				//display spawnpoints
+				for (int i = 0; i < redSpawns.size(); i++) {
+					int[] current = redSpawns.get(i);
+					gametextures.loadTexture(14);
+					model.render(current[0] * tileLength, current[1] * tileLength, current[0] * tileLength + 128, current[1] * tileLength + 128);
+				}
+				
+				for (int i = 0; i < blueSpawns.size(); i++) {
+					int[] current = blueSpawns.get(i);
+					gametextures.loadTexture(15);
+					model.render(current[0] * tileLength, current[1] * tileLength, current[0] * tileLength + 128, current[1] * tileLength + 128);
+				}
+				
+				//display projectiles
+				for (ProjectileInfo p : projectiles) {
+					gametextures.loadTexture(p.getTexId());
+					model.render(p.getVertices());
+				}
+	
+				//display units
+				for (UnitInfo u : units) {
+					gametextures.loadTexture(u.getColor());
+					model.render(u.getVertices());
+				}
+				
+				//display glow on selected units
+				gametextures.loadTexture(0);
 				for (UnitInfo u : units) {
 					for (int i = 0; i < selectedUnitsId.size(); i++) {
 						if(selectedUnitsId.get(i) == u.getId()){
-							avgX += u.getX();
-							avgY += u.getY();
+							model.render(u.getOutlineVertices());
 						}
 					}
 				}
-				avgX /= selectedUnitsId.size();
-				avgY /= selectedUnitsId.size();
-						
-				viewX = Math.min(worldWidth - cameraWidth * (double) gameScreenWidth / (double) WINDOW_WIDTH,
-						Math.max(0, avgX - cameraWidth * mapWidthScalar() /2));
-				viewY = Math.min(worldHeight - cameraHeight * (double) gameScreenHeight / (double) WINDOW_HEIGHT,
-						Math.max(0, avgY - cameraHeight * mapHeightScalar() /2));
+				
+				projectTrueWindowCoordinates();
+				
+				//render sidebar
+				gametextures.loadTexture(10);
+				model.setTextureCoords(textureCoords);
+				model.render(gameScreenWidth, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+				
+				//render day/night bar
+				gametextures.loadTexture(11);
+				double shift = ((double) tick / (double) ticksPerDay) - 0.3;
+				model.setTextureCoords(new double[] {0 + shift, 0, 0 + shift, 1, 0.2 + shift, 0, 0.2 + shift, 1});
+				model.render(gameScreenWidth + 20, 40, gameScreenWidth + 180, 75);
+				
+				//render red flag and score
+				gametextures.loadTexture(12);
+				model.setTextureCoords(textureCoords);
+				model.render(gameScreenWidth + 10, 100, gameScreenWidth + 60, 150);
+				bitmap.drawNumber(gameScreenWidth + 70, 110, gameScreenWidth + 95, 140, red_score);
+				
+				//render blue flag and score
+				gametextures.loadTexture(13);
+				model.render(gameScreenWidth + 10, 160, gameScreenWidth + 60, 210);
+				bitmap.drawNumber(gameScreenWidth + 70, 170, gameScreenWidth + 95, 200, blue_score);
+				
+				//render hp bar and unit icon
+				if(selectedUnitsId.size() == 1) {
+					UnitInfo selected = units.get(selectedUnitsId.get(0));
+					gametextures.loadTexture(16);
+					model.render(gameScreenWidth + 25, 240, gameScreenWidth + 175, 250);
+					gametextures.loadTexture(17);
+					model.render(gameScreenWidth + 25, 240, (int) (gameScreenWidth + 25 + (150 * (double) selected.getHealth()/(double) selected.getMaxHealth())), 250);
+					gametextures.loadTexture(selected.getColor());
+					model.render(gameScreenWidth + 65, 260, gameScreenWidth + 135, 295);
+				}
+				
+				//render return to base button
+				if(teamColor == 1) {
+					gametextures.loadTexture(14);
+				}
+				else if(teamColor == 2) {
+					gametextures.loadTexture(15);
+				}
+				model.render(gameScreenWidth + 10, 570, gameScreenWidth + 60, 620);
+				
+				glDisable(GL_TEXTURE_2D);
+				
+				//send server movement 
+				if(sentMovement == false) {
+					client.sendTCP(new UnitMovement(selectedUnitsId, aPressed, wPressed, dPressed, sPressed));
+					sentMovement = true;
+				}
+				
+				tick++;
+				if(tick > ticksPerDay) {
+					tick = 0;
+				}
+				else if(tick < 2000) {
+					lightLevel = Math.abs(0.5f - (float) tick/(ticksPerDay/6));
+				}
+				else if(tick < 12000) {
+					lightLevel = 0;
+				}
+				else if(tick < 14000) {
+					lightLevel = ((float) tick-(ticksPerDay/2)) /(ticksPerDay/6);
+				}
+				else {
+					lightLevel = 0.5f;
+				}
+				
+				glColor4f(0f, 0f, 0f, lightLevel);
+				
+				gametextures.loadTexture(-1);
+				model.render(new double[] {0, 0, 0, gameScreenHeight, gameScreenWidth, 0, gameScreenWidth, gameScreenHeight});
+				
+				glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+				
+				if(unitTracking && selectedUnitsId.size() != 0) {
+					double avgX = 0;
+					double avgY = 0;
+					for (UnitInfo u : units) {
+						for (int i = 0; i < selectedUnitsId.size(); i++) {
+							if(selectedUnitsId.get(i) == u.getId()){
+								avgX += u.getX();
+								avgY += u.getY();
+							}
+						}
+					}
+					avgX /= selectedUnitsId.size();
+					avgY /= selectedUnitsId.size();
+							
+					viewX = Math.min(worldWidth - cameraWidth * (double) gameScreenWidth / (double) WINDOW_WIDTH,
+							Math.max(0, avgX - cameraWidth * mapWidthScalar() /2));
+					viewY = Math.min(worldHeight - cameraHeight * (double) gameScreenHeight / (double) WINDOW_HEIGHT,
+							Math.max(0, avgY - cameraHeight * mapHeightScalar() /2));
+				}
+							
+				//move camera
+				if (panLeft) {
+					viewX = Math.max(0, viewX - cameraWidth / 30);
+					unitTracking = false;
+				}
+				if (panRight) {
+					viewX = Math.min(worldWidth - cameraWidth * (double) gameScreenWidth / (double) WINDOW_WIDTH, viewX + cameraWidth / 30);
+					unitTracking = false;
+				}
+				if (panDown) {
+					viewY = Math.min(worldHeight - cameraHeight * (double) gameScreenHeight / (double) WINDOW_HEIGHT, viewY + cameraHeight / 30);
+					unitTracking = false;
+				}
+				if (panUp) {
+					viewY = Math.max(0, viewY - cameraHeight / 30);
+					unitTracking = false;
+				}
+				
+				glfwSwapBuffers(window); // swap the color buffers
 			}
-						
-			//move camera
-			if (panLeft) {
-				viewX = Math.max(0, viewX - cameraWidth / 30);
-				unitTracking = false;
+			else if(gameState == 3) {
+				if(!staticFrame) {
+					projectTrueWindowCoordinates();
+					gametextures.loadTexture(10);
+					model.render(100, 150, 540, 450);
+					glfwSwapBuffers(window);
+					staticFrame = true;
+				}
 			}
-			if (panRight) {
-				viewX = Math.min(worldWidth - cameraWidth * (double) gameScreenWidth / (double) WINDOW_WIDTH, viewX + cameraWidth / 30);
-				unitTracking = false;
+			else if(gameState == 4) {
+				if(!staticFrame) {
+					projectTrueWindowCoordinates();
+					gametextures.loadTexture(10);
+					model.render(100, 150, 540, 450);
+					glfwSwapBuffers(window);
+					staticFrame = true;
+				}
 			}
-			if (panDown) {
-				viewY = Math.min(worldHeight - cameraHeight * (double) gameScreenHeight / (double) WINDOW_HEIGHT, viewY + cameraHeight / 30);
-				unitTracking = false;
-			}
-			if (panUp) {
-				viewY = Math.max(0, viewY - cameraHeight / 30);
-				unitTracking = false;
-			}
-			
-			glfwSwapBuffers(window); // swap the color buffers
 		}
 	}
 
