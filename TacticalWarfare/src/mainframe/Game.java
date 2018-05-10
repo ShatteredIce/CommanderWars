@@ -97,7 +97,7 @@ public class Game extends Listener{
 	int blue_flags = 0;
 	int red_score = 0;
 	int blue_score = 0;
-	int pointsToWin = 10;
+	int pointsToWin = 100000;
 	
 	boolean aPressed = false;
 	boolean wPressed = false;
@@ -994,7 +994,35 @@ public class Game extends Listener{
 			for (int j = 0; j < units.size(); j++) {
 				Unit u = units.get(j);
 				if(gamelogic.polygon_intersection(p.getPoints(), u.getPoints()) && (p.getColor() != u.getColor())){
-					u.setHealth(u.getHealth() - p.getDamage());
+					
+					boolean unitInSpawn = false;
+					//check to see if unit is in spawn area
+					if(u.getColor() == 1) { //red unit
+						for (int k = 0; k < redSpawns.size(); k++) {
+							int[] spawnPos = redSpawns.get(k);
+							if((u.getX() > spawnPos[0] * tileLength) && (u.getX() < (spawnPos[0] + 2) * tileLength) 
+									&& (u.getY() > spawnPos[1] * tileLength) && (u.getY() < (spawnPos[1] + 2) * tileLength)) {
+								unitInSpawn = true;
+								break;
+							}
+						}
+					}
+					else if(u.getColor() == 2) { //blue unit
+						for (int k = 0; k < blueSpawns.size(); k++) {
+							int[] spawnPos = blueSpawns.get(k);
+							if((u.getX() > spawnPos[0] * tileLength) && (u.getX() < (spawnPos[0] + 2) * tileLength) 
+									&& (u.getY() > spawnPos[1] * tileLength) && (u.getY() < (spawnPos[1] + 2) * tileLength)) {
+								unitInSpawn = true;
+								break;
+							}
+						}
+					}
+					
+					if(!unitInSpawn) {
+						u.setHealth(u.getHealth() - p.getDamage());
+					}
+					
+					
 					//update score for kill
 					if(u.getHealth() <= 0) {
 						if(p.getColor() == 1) {
