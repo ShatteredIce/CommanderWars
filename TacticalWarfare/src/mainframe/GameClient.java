@@ -86,6 +86,7 @@ public class GameClient extends Listener{
 	
 	int gameState = 1;
 	boolean staticFrame = false;
+	boolean reloadMap = false;
 	
 	int red_score = 0;
 	int blue_score = 0;
@@ -152,7 +153,7 @@ public class GameClient extends Listener{
 				client.connect(5000, ip, tcpPort, udpPort);
 				break;
 			}
-			catch(UnknownHostException e) {
+			catch(IOException e) {
 				System.out.println("Failed to connect to " + ip);
 				System.out.print("Enter Host IP: ");
 				ip = scanner.nextLine();
@@ -414,6 +415,7 @@ public class GameClient extends Listener{
 			//clear data from previous game
 			staticFrame = false;
 			projectiles.clear();
+			reloadMap = true;
 		}
 		else if(obj instanceof TileInfo) {
 			TileInfo info = (TileInfo) obj;
@@ -454,9 +456,6 @@ public class GameClient extends Listener{
 		gametextures = new GameTextures();
 		bitmap = new Bitmap();
 		
-		loadMap();
-
-		
 		final double[] textureCoords = {0, 0, 0, 1, 1, 0, 1, 1};
 		final int[] indices = {0, 1, 2, 2, 1, 3};
 		final double[] placeholder = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -466,6 +465,12 @@ public class GameClient extends Listener{
 		// Run the rendering loop until the user has attempted to close
 		// the window or has pressed the ESCAPE key.
 		while ( !glfwWindowShouldClose(window) ) {
+			
+			//reload map if necessary
+			if(reloadMap){
+				loadMap();
+				reloadMap = false;
+			}
 
 			// Poll for window events. The key callback above will only be
 			// invoked during this call.
