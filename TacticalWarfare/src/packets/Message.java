@@ -2,8 +2,8 @@ package packets;
 
 public class Message {
 	
-	String text;
-	int id;
+	private String text;
+	private int value;
 
 	public Message(){
 		
@@ -13,9 +13,17 @@ public class Message {
 		text = newtext;
 	}
 	
-	public Message(String newtext, int newid){
+	public Message(String newtext, int newvalue){
 		text = newtext;
-		id = newid;
+		value = newvalue;
+	}
+	
+	public String getText() {
+		return text;
+	}
+	
+	public int getValue() {
+		return value;
 	}
 	
 }

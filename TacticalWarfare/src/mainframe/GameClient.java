@@ -84,7 +84,7 @@ public class GameClient extends Listener{
 	int myPlayerId = -1;
 	int teamColor = -1;
 	
-	int gameState = 3;
+	int gameState = 1;
 	
 	int red_score = 0;
 	int blue_score = 0;
@@ -109,6 +109,10 @@ public class GameClient extends Listener{
 	static int udpPort = 27960;
 	
 	static Bitmap bitmap;
+	
+	//clickable buttons
+	Button baseButton = new Button(gameScreenWidth + 10, 570, gameScreenWidth + 60, 620);
+	int baseIndex = 0;
 	
 	public void run() throws IOException {
 		
@@ -192,7 +196,7 @@ public class GameClient extends Listener{
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE); // the window will be resizable
 
 		// Create the window
-		window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "My World (Client)", NULL, NULL);
+		window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Kingdomfall (Client)", NULL, NULL);
 		if ( window == NULL )
 			throw new RuntimeException("Failed to create the GLFW window");
 
@@ -202,11 +206,11 @@ public class GameClient extends Listener{
 				glfwSetWindowShouldClose(window, true); 
 			//camera controls
 			if ( key == GLFW_KEY_MINUS && action == GLFW_PRESS )
-				if(gameState == 3){
+				if(gameState == 1){
 					updateZoomLevel(true);
 				}
 			if ( key == GLFW_KEY_EQUAL && action == GLFW_PRESS )
-				if(gameState == 3){
+				if(gameState == 1){
 					updateZoomLevel(false);
 				}
 			if ( key == GLFW_KEY_T && action == GLFW_PRESS ) {
@@ -270,6 +274,7 @@ public class GameClient extends Listener{
 			}
 		});
 		
+		//mouse clicks
 		glfwSetMouseButtonCallback (window, (window, button, action, mods) -> {
 			DoubleBuffer xpos = BufferUtils.createDoubleBuffer(3);
 			DoubleBuffer ypos = BufferUtils.createDoubleBuffer(3);
@@ -284,25 +289,34 @@ public class GameClient extends Listener{
 			xpos.put(2, xpos.get(0) - windowXOffset);
 			ypos.put(2, ypos.get(0) - windowYOffset);
 			if ( button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-				for (int u = 0; u < units.size(); u++) {
-					if(units.get(u).getOwnerId() == myPlayerId && gamelogic.distance(xpos.get(1), ypos.get(1), units.get(u).getX(), units.get(u).getY()) <= 30){
-						boolean selectUnit = true;
-						for (int i = 0; i < selectedUnitsId.size(); i++) {
-							if(selectedUnitsId.get(i) == units.get(u).getId()){
-								selectedUnitsId.remove(i);
-								selectUnit = false;
-								break;
+				if(gameState == 1) {
+					if(baseButton.isClicked(xpos.get(2), ypos.get(2))) {
+						centerCameraOnBase();
+					}
+					else {
+						for (int u = 0; u < units.size(); u++) {
+							if(units.get(u).getOwnerId() == myPlayerId && gamelogic.distance(xpos.get(1), ypos.get(1), units.get(u).getX(), units.get(u).getY()) <= 30){
+								boolean selectUnit = true;
+								for (int i = 0; i < selectedUnitsId.size(); i++) {
+									if(selectedUnitsId.get(i) == units.get(u).getId()){
+										selectedUnitsId.remove(i);
+										selectUnit = false;
+										break;
+									}
+								}
+								if(selectUnit){
+									selectedUnitsId.add(units.get(u).getId());
+								}
 							}
-						}
-						if(selectUnit){
-							selectedUnitsId.add(units.get(u).getId());
 						}
 					}
 				}
 			}
 			else if ( button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
-				if(selectedUnitsId.size() > 0){
-					client.sendTCP(new MouseClick(xpos.get(1), ypos.get(1), selectedUnitsId));
+				if(gameState == 1) {
+					if(selectedUnitsId.size() > 0){
+						client.sendTCP(new MouseClick(xpos.get(1), ypos.get(1), selectedUnitsId));
+					}
 				}
 			}
 		});
@@ -343,7 +357,7 @@ public class GameClient extends Listener{
 			//create player
 			case 1:
 				players.add(new Player(packet.getColor(), packet.getId()));
-				client.sendTCP(new Message("recieved new player", packet.getId()));
+//				client.sendTCP(new Message("recieved new player", packet.getId()));
 //				System.out.println("recieved player " + packet.getId());
 				if(packet.getId() == myPlayerId) {
 					teamColor = packet.getColor();
@@ -394,6 +408,7 @@ public class GameClient extends Listener{
 			worldHeight = mapHeight * tileLength;
 			redSpawns = packet.getRedSpawns();
 			blueSpawns = packet.getBlueSpawns();
+			gameState = packet.getState();
 			tick = packet.getTick();
 		}
 		else if(obj instanceof TileInfo) {
@@ -401,6 +416,12 @@ public class GameClient extends Listener{
 			map[info.getTileX()][info.getTileY()] = info.getTileId();
 			if(tiles != null) {
 				tiles[info.getTileX()][info.getTileY()].setId(info.getTileId());
+			}
+		}
+		else if(obj instanceof Message) {
+			Message msg = (Message) obj;
+			if(msg.getText().equals("Game State Change")) {
+				gameState = msg.getValue();
 			}
 		}
 	}
@@ -496,25 +517,36 @@ public class GameClient extends Listener{
 			
 			projectTrueWindowCoordinates();
 			
+			//render sidebar
 			gametextures.loadTexture(10);
 			model.setTextureCoords(textureCoords);
 			model.render(gameScreenWidth, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 			
+			//render day/night bar
 			gametextures.loadTexture(11);
 			double shift = ((double) tick / (double) ticksPerDay) - 0.3;
 			model.setTextureCoords(new double[] {0 + shift, 0, 0 + shift, 1, 0.2 + shift, 0, 0.2 + shift, 1});
 			model.render(gameScreenWidth + 20, 40, gameScreenWidth + 180, 75);
 			
+			//render red flag and score
 			gametextures.loadTexture(12);
 			model.setTextureCoords(textureCoords);
 			model.render(gameScreenWidth + 10, 100, gameScreenWidth + 60, 150);
 			bitmap.drawNumber(gameScreenWidth + 70, 110, gameScreenWidth + 95, 140, red_score);
 			
-			
+			//render blue flag and score
 			gametextures.loadTexture(13);
 			model.render(gameScreenWidth + 10, 160, gameScreenWidth + 60, 210);
 			bitmap.drawNumber(gameScreenWidth + 70, 170, gameScreenWidth + 95, 200, blue_score);
 			
+			//render return to base button
+			if(teamColor == 1) {
+				gametextures.loadTexture(14);
+			}
+			else if(teamColor == 2) {
+				gametextures.loadTexture(15);
+			}
+			model.render(gameScreenWidth + 10, 570, gameScreenWidth + 60, 620);
 			
 			glDisable(GL_TEXTURE_2D);
 			
@@ -703,6 +735,30 @@ public class GameClient extends Listener{
 				cameraHeight /= zoomLevel;
 				viewX = oldX - cameraWidth * xAxisDistance;
 				viewY = oldY - cameraHeight * yAxisDistance;
+			}
+		}
+	}
+	
+	//center camera view on base
+	public void centerCameraOnBase(){
+		if(teamColor == 1) {
+			viewX = Math.min(worldWidth - cameraWidth * mapWidthScalar(),
+					Math.max(0, (redSpawns.get(baseIndex)[0] + 1) * (tileLength) - cameraWidth * mapWidthScalar() /2));
+			viewY = Math.min(worldHeight - cameraHeight * mapHeightScalar(),
+					Math.max(0, (redSpawns.get(baseIndex)[1] + 1) * (tileLength) - cameraHeight * mapHeightScalar() /2));
+			baseIndex++;
+			if(baseIndex == redSpawns.size()) {
+				baseIndex = 0;
+			}
+		}
+		else if(teamColor == 2) {
+			viewX = Math.min(worldWidth - cameraWidth * mapWidthScalar(),
+					Math.max(0, (blueSpawns.get(baseIndex)[0] + 1) * (tileLength) - cameraWidth * mapWidthScalar() /2));
+			viewY = Math.min(worldHeight - cameraHeight * mapHeightScalar(),
+					Math.max(0, (blueSpawns.get(baseIndex)[1] + 1) * (tileLength) - cameraHeight * mapHeightScalar() /2));
+			baseIndex++;
+			if(baseIndex == blueSpawns.size()) {
+				baseIndex = 0;
 			}
 		}
 	}

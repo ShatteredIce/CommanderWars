@@ -5,6 +5,7 @@ import java.util.ArrayList;
 public class MapData {
 	
 	private int[][] data;
+	private int gameState;
 	private int tick;
 	private ArrayList<int[]> redSpawns;
 	private ArrayList<int[]> blueSpawns;
@@ -14,8 +15,9 @@ public class MapData {
 		
 	}
 	
-	public MapData(int[][] newdata, int newtick, ArrayList<int[]> newredSpawns, ArrayList<int[]> newblueSpawns){
+	public MapData(int[][] newdata, int newstate, int newtick, ArrayList<int[]> newredSpawns, ArrayList<int[]> newblueSpawns){
 		data = newdata;
+		gameState = newstate;
 		tick = newtick;
 		redSpawns = newredSpawns;
 		blueSpawns = newblueSpawns;
@@ -23,6 +25,10 @@ public class MapData {
 
 	public int[][] getData() {
 		return data;
+	}
+	
+	public int getState() {
+		return gameState;
 	}
 	
 	public int getTick() {

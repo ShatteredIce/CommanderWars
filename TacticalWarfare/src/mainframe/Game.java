@@ -85,7 +85,8 @@ public class Game extends Listener{
 	boolean clientRecieved = false;
 	boolean spacePressed = false;
 	
-	int gameState = 3;
+	int gameState = 1;
+	boolean gameStateChanged = false;
 	
 	int teamColor = 1;
 	
@@ -96,6 +97,7 @@ public class Game extends Listener{
 	int blue_flags = 0;
 	int red_score = 0;
 	int blue_score = 0;
+	int pointsToWin = 10;
 	
 	boolean aPressed = false;
 	boolean wPressed = false;
@@ -119,6 +121,10 @@ public class Game extends Listener{
 	Random random = new Random();
 	
 	static Bitmap bitmap;
+	
+	//clickable buttons
+	Button baseButton = new Button(gameScreenWidth + 10, 570, gameScreenWidth + 60, 620);
+	int baseIndex = 0;
 	
 	public void run() throws IOException {
 		//create server
@@ -166,7 +172,7 @@ public class Game extends Listener{
 	public void connected(Connection c){
 		System.out.println("recieved connection from " + c.getRemoteAddressTCP().getHostString());
 		//send map
-		server.sendToTCP(c.getID(), new MapData(map, tick, redSpawns, blueSpawns));
+		server.sendToTCP(c.getID(), new MapData(map, gameState, tick, redSpawns, blueSpawns));
 		//add previous players
 		for (int i = 0; i < players.size(); i++) {
 			Player previous = players.get(i);
@@ -205,11 +211,15 @@ public class Game extends Listener{
 //		System.out.println("finished recieving client " + c.getID());
 	}
 	
+	//update clients of score, unit postions, and projectile positions each gametick
+	//also inform clients if game state was changed
 	public void updateClients(){
-		for (int i = 0; i < players.size(); i++) {
-			server.sendToAllTCP(new ScoreData(red_score, blue_score));
-			server.sendToAllTCP(new UnitPositions(units));
-			server.sendToAllTCP(new ProjectilePositions(projectiles));
+		server.sendToAllTCP(new ScoreData(red_score, blue_score));
+		server.sendToAllTCP(new UnitPositions(units));
+		server.sendToAllTCP(new ProjectilePositions(projectiles));
+		if(gameStateChanged) {
+			server.sendToAllTCP(new Message("Game State Change", gameState));
+			gameStateChanged = false;
 		}
 	}
 	
@@ -277,7 +287,7 @@ public class Game extends Listener{
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE); // the window will be resizable
 
 		// Create the window
-		window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "My World (Server)", NULL, NULL);
+		window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Kingdomfall (Server)", NULL, NULL);
 		if ( window == NULL )
 			throw new RuntimeException("Failed to create the GLFW window");
 
@@ -287,11 +297,11 @@ public class Game extends Listener{
 				glfwSetWindowShouldClose(window, true);
 			//camera controls
 			if ( key == GLFW_KEY_MINUS && action == GLFW_PRESS )
-				if(gameState == 3){
+				if(gameState == 1){
 					updateZoomLevel(true);
 				}
 			if ( key == GLFW_KEY_EQUAL && action == GLFW_PRESS )
-				if(gameState == 3){
+				if(gameState == 1){
 					updateZoomLevel(false);
 				}
 			if ( key == GLFW_KEY_LEFT && action == GLFW_PRESS )
@@ -360,24 +370,33 @@ public class Game extends Listener{
 			xpos.put(2, xpos.get(0) - windowXOffset);
 			ypos.put(2, ypos.get(0) - windowYOffset);
 			if ( button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-				for (int u = 0; u < units.size(); u++) {
-					if(units.get(u).getOwnerId() == serverPlayerId && gamelogic.distance(xpos.get(1), ypos.get(1), units.get(u).getX(), units.get(u).getY()) <= 30){
-						boolean selectUnit = true;
-						for (int i = 0; i < selectedUnitsId.size(); i++) {
-							if(selectedUnitsId.get(i) == units.get(u).getId()){
-								selectedUnitsId.remove(i);
-								selectUnit = false;
-								break;
+				if(gameState == 1) {
+					if(baseButton.isClicked(xpos.get(2), ypos.get(2))) {
+						centerCameraOnBase();
+					}
+					else {
+						for (int u = 0; u < units.size(); u++) {
+							if(units.get(u).getOwnerId() == serverPlayerId && gamelogic.distance(xpos.get(1), ypos.get(1), units.get(u).getX(), units.get(u).getY()) <= 30){
+								boolean selectUnit = true;
+								for (int i = 0; i < selectedUnitsId.size(); i++) {
+									if(selectedUnitsId.get(i) == units.get(u).getId()){
+										selectedUnitsId.remove(i);
+										selectUnit = false;
+										break;
+									}
+								}
+								if(selectUnit){
+									selectedUnitsId.add(units.get(u).getId());
+								}
 							}
-						}
-						if(selectUnit){
-							selectedUnitsId.add(units.get(u).getId());
 						}
 					}
 				}
 			}
 			else if ( button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
-				moveOrder(xpos.get(1), ypos.get(1), selectedUnitsId);
+				if(gameState == 1) {
+					moveOrder(xpos.get(1), ypos.get(1), selectedUnitsId);
+				}
 			}
 		});
 
@@ -555,29 +574,20 @@ public class Game extends Listener{
 			model.render(gameScreenWidth + 10, 160, gameScreenWidth + 60, 210);
 			bitmap.drawNumber(gameScreenWidth + 70, 170, gameScreenWidth + 95, 200, blue_score);
 			
+			//render return to base button
+			if(teamColor == 1) {
+				gametextures.loadTexture(14);
+			}
+			else if(teamColor == 2) {
+				gametextures.loadTexture(15);
+			}
+			model.render(gameScreenWidth + 10, 570, gameScreenWidth + 60, 620);
+			
 			glDisable(GL_TEXTURE_2D);
 			
-			//update light level
-			tick++;
-			if(tick > ticksPerDay) {
-				tick = 0;
-			}
-			else if(tick < 2000) {
-				lightLevel = Math.abs(0.5f - (float) tick/(ticksPerDay/6));
-			}
-			else if(tick < 12000) {
-				lightLevel = 0;
-			}
-			else if(tick < 14000) {
-				lightLevel = ((float) tick-(ticksPerDay/2)) /(ticksPerDay/6);
-			}
-			else {
-				lightLevel = 0.5f;
-			}
-			if(tick % 50 == 0) {
-				red_score += red_flags;
-				blue_score += blue_flags;
-			}
+			updateLightLevel();
+			
+			updateScore();
 			
 			glColor4f(0f, 0f, 0f, lightLevel);
 			
@@ -1137,6 +1147,69 @@ public class Game extends Listener{
 				viewX = oldX - cameraWidth * xAxisDistance;
 				viewY = oldY - cameraHeight * yAxisDistance;
 			}
+		}
+	}
+	
+	//center camera view on base
+	public void centerCameraOnBase(){
+		if(teamColor == 1) {
+			viewX = Math.min(worldWidth - cameraWidth * mapWidthScalar(),
+					Math.max(0, (redSpawns.get(baseIndex)[0] + 1) * (tileLength) - cameraWidth * mapWidthScalar() /2));
+			viewY = Math.min(worldHeight - cameraHeight * mapHeightScalar(),
+					Math.max(0, (redSpawns.get(baseIndex)[1] + 1) * (tileLength) - cameraHeight * mapHeightScalar() /2));
+			baseIndex++;
+			if(baseIndex == redSpawns.size()) {
+				baseIndex = 0;
+			}
+		}
+		else if(teamColor == 2) {
+			viewX = Math.min(worldWidth - cameraWidth * mapWidthScalar(),
+					Math.max(0, (blueSpawns.get(baseIndex)[0] + 1) * (tileLength) - cameraWidth * mapWidthScalar() /2));
+			viewY = Math.min(worldHeight - cameraHeight * mapHeightScalar(),
+					Math.max(0, (blueSpawns.get(baseIndex)[1] + 1) * (tileLength) - cameraHeight * mapHeightScalar() /2));
+			baseIndex++;
+			if(baseIndex == blueSpawns.size()) {
+				baseIndex = 0;
+			}
+		}
+	}
+	
+	//updates light level
+	public void updateLightLevel() {
+		//update light level
+		tick++;
+		if(tick > ticksPerDay) {
+			tick = 0;
+		}
+		else if(tick < 2000) {
+			lightLevel = Math.abs(0.5f - (float) tick/(ticksPerDay/6));
+		}
+		else if(tick < 12000) {
+			lightLevel = 0;
+		}
+		else if(tick < 14000) {
+			lightLevel = ((float) tick-(ticksPerDay/2)) /(ticksPerDay/6);
+		}
+		else {
+			lightLevel = 0.5f;
+		}
+	}
+	
+	//updates score and checks for win condition
+	public void updateScore() {
+		if(tick % 50 == 0) {
+			red_score += red_flags;
+			blue_score += blue_flags;
+		}
+		//red team wins!
+		if(red_score >= pointsToWin && red_score > blue_score) {
+			gameState = 3;
+			gameStateChanged = true;
+		}
+		//blue team wins!
+		else if(blue_score >= pointsToWin && blue_score > red_score) {
+			gameState = 4;
+			gameStateChanged = true;
 		}
 	}
 
