@@ -10,11 +10,11 @@ public class GameTextures {
 	final static Texture blueunit = new Texture("blueunit.png");
 	final static Texture unitglow = new Texture("unitglow.png");
 	final static Texture border = new Texture("lightgray.png");
-	final static Texture redflag = new Texture("redflag.png");
-	final static Texture blueflag = new Texture("blueflag.png");
-	final static Texture projectile = new Texture("projectile_test.png");
-	final static Texture mine_unarmed = new Texture("mine_unarmed.png");
-	final static Texture mine = new Texture("mine.png");
+	final static Texture redflag = new Texture("tower_red.png");
+	final static Texture blueflag = new Texture("tower_blue.png");
+	final static Texture projectile = new Texture("projectile_arrow.png");
+	final static Texture trap_unarmed = new Texture("trap_unarmed.png");
+	final static Texture trap_armed = new Texture("trap_armed.png");
 	final static Texture daynightbar = new Texture("day_night_bar_v2.png");
 	final static Texture redspawn = new Texture("redspawn.png");
 	final static Texture bluespawn = new Texture("bluespawn.png");
@@ -62,10 +62,10 @@ public class GameTextures {
 			projectile.bind();
 			break;
 		case 21:
-			mine_unarmed.bind();
+			trap_unarmed.bind();
 			break;
 		case 22:
-			mine.bind();
+			trap_armed.bind();
 			break;
 		default:
 			try {

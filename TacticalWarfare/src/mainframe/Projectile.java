@@ -14,11 +14,12 @@ public class Projectile {
 	double angle;
 	double speed;
 	int damage;
-	double lifetime;
-	double current_lifetime = 0;
-	int texid;
+	int lifetime;
+	int current_lifetime = 0;
+	int texId;
+	boolean animating = false;
 	
-	public Projectile(Unit newowner, int newcolor, double spawnx, double spawny, double newangle, double newspeed, int newdamage, double newlifetime, int newtexid) {
+	public Projectile(Unit newowner, int newcolor, double spawnx, double spawny, double newangle, double newspeed, int newdamage, int newlifetime, int newtexId) {
 		owner = newowner;
 		color = newcolor;
 		center = new Point(spawnx, spawny);
@@ -26,7 +27,7 @@ public class Projectile {
 		speed = newspeed;
 		damage = newdamage;
 		lifetime = newlifetime;
-		texid = newtexid;
+		texId = newtexId;
 		createPoints();
 		setPoints();
 	}
@@ -34,11 +35,11 @@ public class Projectile {
 	public void createPoints(){
 		int width = 1;
 		int height = 1;
-		if(texid == 20) {
-			 width = 2;
-			 height = 8;
+		if(texId == 20) {
+			 width = 5;
+			 height = 22;
 		}
-		else if(texid == 21) {
+		else if(texId == 21) {
 			width = 32;
 			height = 32;
 		}
@@ -75,25 +76,51 @@ public class Projectile {
 	
 	//returns false if projectile is destroyed
 	public boolean updateLifetime(){
-		current_lifetime += 1;
+		current_lifetime++;
 		if(current_lifetime >= lifetime){
 			destroy();
 			return false;
 		}
-		if(texid == 21 && current_lifetime > 100) { //arm mines
-			texid = 22;
+		if(texId == 21 && current_lifetime > 100) { //arm mines
+			texId = 22;
 		}
 		return true;
 	}
 	
 	public void destroy() {
-		if(texid == 22) {
+		if(texId == 22) {
 			owner.setNumMines(owner.getNumMines() - 1);
 		}
 	}
 	
+	public double[] getTexCoords(float lightLevel) {
+		if(texId == 20) {
+			return new double[] {0, 1, 1, 1, 0, 0, 1, 0};
+		}
+		else if(texId == 22) {
+			double offset = 0;
+			if(current_lifetime % 200 > 180 && lightLevel < 0.2 && !animating) {
+				animating = true;
+			}
+			if(current_lifetime % 200 > 180 && animating) {
+				 if(current_lifetime % 2 == 0) { //even 
+					 offset = ((current_lifetime % 100) - 80) / 20d;
+				 }
+				 else { //odd
+					 offset = ((current_lifetime % 100) - 79) / 20d;
+				 }
+			}
+			else if(animating) {
+				animating = false;
+			}
+			return new double[] {0 + offset, 0, 0 + offset, 1, 0.1 + offset, 0, 0.1 + offset, 1}; 
+		}
+		return new double[] {0, 0, 0, 1, 1, 0, 1, 1};
+		
+	}
+	
 	public int getTexId() {
-		return texid;
+		return texId;
 	}
 	
 	public int getColor() {
@@ -102,6 +129,10 @@ public class Projectile {
 	
 	public double getAngle(){
 		return angle;
+	}
+	
+	public int getCurrentLifetime() {
+		return current_lifetime;
 	}
 	
 	public double[] getVertices(){

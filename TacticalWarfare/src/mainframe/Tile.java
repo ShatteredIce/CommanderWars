@@ -9,9 +9,9 @@ public class Tile {
 	final static Texture tex1 = new Texture("rock.png");
 	final static Texture tex2 = new Texture("grass_tiles.png");
 	final static Texture tex3 = new Texture("forest_tiles_v2.png");
-	final static Texture tex4 = new Texture("neutralflag.png");
-	final static Texture tex5 = new Texture("redflag.png");
-	final static Texture tex6 = new Texture("blueflag.png");
+	final static Texture tex4 = new Texture("tower_neutral.png");
+	final static Texture tex5 = new Texture("tower_red.png");
+	final static Texture tex6 = new Texture("tower_blue.png");
 	
 	double[] vertices = new double[8];
 	

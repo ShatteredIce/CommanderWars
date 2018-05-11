@@ -528,6 +528,7 @@ public class Game extends Listener{
 						p--;
 					}
 					else {
+						model.setTextureCoords(current.getTexCoords(lightLevel)); //allow for projectile animations
 						gametextures.loadTexture(current.getTexId());
 						model.render(current.getVertices());
 						
@@ -535,6 +536,7 @@ public class Game extends Listener{
 				}
 				
 				//display units
+				model.setTextureCoords(textureCoords);
 				for (Unit u : units) {
 					int[] tile = currentTile(u.getX(),u.getY());
 					if(tile[0] != -1) {
@@ -802,7 +804,7 @@ public class Game extends Listener{
 			for (int i = 0; i < firingUnits.size(); i++) {
 				if(firingUnits.get(i) == u.getId() && u.getNumMines() < 4){
 					u.setNumMines(u.getNumMines() + 1);
-					projectiles.add(new Projectile(u, u.getColor(), u.getX(), u.getY(), 0, 0, 5, 1000, 21));
+					projectiles.add(new Projectile(u, u.getColor(), u.getX(), u.getY(), 0, 0, 5, 2000, 21));
 				}
 			}
 		}
@@ -1285,6 +1287,7 @@ public class Game extends Listener{
 	//updates light level
 	public void updateLightLevel() {
 		//update light level
+		//lightLevel goes from 0.5 (dark) to 0 (light)
 		tick++;
 		if(tick > ticksPerDay) {
 			tick = 0;

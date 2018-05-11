@@ -20,7 +20,7 @@ public class Unit {
 	double base_velocity = 4;
 	double terrain_movement_modifier = 1;
 	double current_turn_speed = 0;
-	double max_turn_speed = 2;
+	double max_turn_speed = 4;
 	int cooldown = 20;
 	int current_cooldown = 0;
 	int max_health = 10;
@@ -149,7 +149,7 @@ public class Unit {
 	}
 	
 	public void moveBackwards() {
-		current_velocity = -(base_velocity/4);
+		current_velocity = -(base_velocity/2);
 	}
 	
 	public void setLocationTarget(double x, double y){

@@ -507,11 +507,13 @@ public class GameClient extends Listener{
 				
 				//display projectiles
 				for (ProjectileInfo p : projectiles) {
+					model.setTextureCoords(p.getTexCoords(lightLevel)); //allow for projectile animations
 					gametextures.loadTexture(p.getTexId());
 					model.render(p.getVertices());
 				}
 	
 				//display units
+				model.setTextureCoords(textureCoords);
 				for (UnitInfo u : units) {
 					gametextures.loadTexture(u.getColor());
 					model.render(u.getVertices());
