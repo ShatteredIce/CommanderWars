@@ -32,8 +32,11 @@ import rendering.Bitmap;
 import rendering.GameTextures;
 import rendering.Model;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.nio.*;
 
 import static org.lwjgl.glfw.Callbacks.*;
@@ -92,6 +95,7 @@ public class Game extends Listener{
 	
 	boolean clientRecieved = false;
 	boolean spacePressed = false;
+	int numGames = 1;
 	
 	//State variables
 	int gameState = 1;
@@ -1371,13 +1375,33 @@ public class Game extends Listener{
 	public void checkWin() {
 		//Red team wins!
 		if(red_score >= pointsToWin && red_score > blue_score) {
+			saveScore();
 			gameState = 3;
 			gameStateChanged = true;
 		}
 		//Blue team wins!
 		else if(blue_score >= pointsToWin && blue_score > red_score) {
+			saveScore();
 			gameState = 4;
 			gameStateChanged = true;
+		}
+	}
+	
+	public void saveScore() {
+		try {
+			//setup file writer
+			String leaderboard_file = "leaderboard.txt";
+			BufferedWriter writer = new BufferedWriter(new FileWriter(leaderboard_file, true));
+			writer.append("Game Number: " + numGames);
+			writer.newLine();
+			writer.append("Red Team: " + red_score + "   Blue Team: " + blue_score);
+			writer.newLine();
+			writer.newLine();
+			writer.close();
+			numGames++;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 	
