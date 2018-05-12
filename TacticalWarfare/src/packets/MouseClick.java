@@ -1,6 +1,7 @@
 package packets;
 import java.util.ArrayList;
 
+//packet that stores mouse click data
 public class MouseClick {
 	
 	private double x;

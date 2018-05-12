@@ -53,6 +53,7 @@ public class GameLogic {
 		}
 	}
 	
+	//normalize an angle between 0 and 360 degrees
 	public double normalizeAngle(double angle){
 		while(angle < 0){
 			angle += 360;

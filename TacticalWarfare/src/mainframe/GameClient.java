@@ -56,6 +56,7 @@ public class GameClient extends Listener{
 	
 	int tileLength = 64;
 	
+	//camera variables
 	public double viewX = 0;
 	public double viewY = 0;
 	public double cameraSpeed = 10;
@@ -71,6 +72,7 @@ public class GameClient extends Listener{
     boolean panDown = false;
     boolean unitTracking = false;
 	
+    //map variables
 	int mapWidth;
 	int mapHeight;
 	int[][] map;
@@ -80,6 +82,7 @@ public class GameClient extends Listener{
 	int ticksPerDay = 24000;
 	float lightLevel = 1;
 	
+	//game data
 	ArrayList<Player> players = new ArrayList<>();
 	ArrayList<UnitInfo> units = new ArrayList<>();
 	ArrayList<ProjectileInfo> projectiles = new ArrayList<>();

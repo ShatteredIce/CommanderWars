@@ -57,7 +57,7 @@ public class Launcher {
 				e.printStackTrace();
 			}
 		}
-		else if(exitState == 2) {
+		else if(exitState == 2) { //launch client
 			try {
 				new GameClient().run();
 			} catch (IOException e) {

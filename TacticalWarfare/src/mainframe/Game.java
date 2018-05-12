@@ -55,6 +55,7 @@ public class Game extends Listener{
 	
 	int tileLength = 64;
 	
+	//camera variables
 	public double viewX = 0;
 	public double viewY = 0;
 	public double cameraSpeed = 10;
@@ -70,16 +71,17 @@ public class Game extends Listener{
     boolean panDown = false;
     boolean unitTracking = false;
     
+    //map variables
 	int mapWidth;
 	int mapHeight;
 	int[][] map;
 	Tile[][] tiles = null;
-	int unitId = 0;
 	
 	int tick = 0;
 	int ticksPerDay = 24000;
 	float lightLevel = 1;
 	
+	//game data
 	ArrayList<Player> players = new ArrayList<>();
 	ArrayList<Unit> units = new ArrayList<>();
 	ArrayList<Projectile> projectiles = new ArrayList<>();
@@ -94,6 +96,7 @@ public class Game extends Listener{
 	int gameState = 1;
 	boolean gameStateChanged = false;
 	boolean staticFrame = false;
+	boolean cheats = false;
 	
 	//music
 	File music_path = new File("music/enteringthestronghold.wav");
@@ -103,7 +106,9 @@ public class Game extends Listener{
 	
 	int texturePack = 1;
 	int teamColor = 1;
+	int unitId = 0;
 	
+	//score variables
 	int red_players = 0;
 	int blue_players = 0;
 	
@@ -111,7 +116,7 @@ public class Game extends Listener{
 	int blue_flags = 0;
 	int red_score = 0;
 	int blue_score = 0;
-	int pointsToWin = 1000;
+	int pointsToWin = 2000;
 	
 	boolean aPressed = false;
 	boolean wPressed = false;
@@ -145,6 +150,7 @@ public class Game extends Listener{
 	int baseIndex = 0;
 	Button pauseButton = new Button(gameScreenWidth + 140, 570, gameScreenWidth + 190, 620);
 	Button unpauseButton = new Button(430, 150, 460, 180);
+	Button cheatsButton = new Button(180, 150, 210, 180);
 	Button soundButton = new Button(220, 250, 420, 305);
 	Button textureButton = new Button(220, 310, 420, 365);
 	Button exitButton = new Button(220, 370, 420, 425);
@@ -205,6 +211,7 @@ public class Game extends Listener{
 			Player previous = players.get(i);
 			server.sendToTCP(c.getID(), new PlayerInfo(1, previous.getColor(), previous.getId()));
 		}
+		//makes the client join the team that has the least players, if equal number client joins red
 		Player newplayer;
 		if(blue_players < red_players) {
 			newplayer = new Player(2, c.getID());
@@ -217,7 +224,7 @@ public class Game extends Listener{
 		players.add(newplayer);
 		server.sendToAllTCP(new PlayerInfo(1, newplayer.getColor(), newplayer.getId()));
 		String unitTeam = "client";
-		
+		//create unit for client
 		int spawnindex;
 		double unitX = 0;
 		double unitY = 0;
@@ -253,10 +260,12 @@ public class Game extends Listener{
 	//when an object is recieved
 	@Override
 	public void received(Connection c, Object obj) {
+		//client clicked on game screen, used to move client units
 		if(obj instanceof MouseClick){
 			MouseClick click = (MouseClick) obj;
 			moveOrder(click.getX(), click.getY(), click.getUnitIds());
 		}
+		//process client keypresses for weapons
 		else if(obj instanceof KeyPress) {
 			KeyPress key = (KeyPress) obj;
 			if(key.getKey() == GLFW_KEY_SPACE) {
@@ -266,10 +275,12 @@ public class Game extends Listener{
 				setMine(key.getUnitIds());
 			}
 		}
+		//process client keypresses for unit movement
 		else if(obj instanceof UnitMovement) {
 			UnitMovement data = (UnitMovement) obj;
 			moveUnitsManual(data.getUnitIds(), data.getLeft(), data.getUp(), data.getRight(), data.getDown());
 		}
+		//allows client to pause/resume the game
 		else if(obj instanceof Message) {
 			Message msg = (Message) obj;
 			if(msg.getText().equals("Toggle Pause") && gameState == 1) {
@@ -354,6 +365,7 @@ public class Game extends Listener{
 				if(gameState == 1){
 					updateZoomLevel(false);
 				}
+			//pan camera
 			if ( key == GLFW_KEY_LEFT && action == GLFW_PRESS )
 				panLeft = true;
 			if ( key == GLFW_KEY_LEFT && action == GLFW_RELEASE )
@@ -378,12 +390,10 @@ public class Game extends Listener{
 				aPressed = true;
 			if ( key == GLFW_KEY_A && action == GLFW_RELEASE )
 				aPressed = false;
-			
 			if ( key == GLFW_KEY_D && action == GLFW_PRESS )
 				dPressed = true;
 			if ( key == GLFW_KEY_D && action == GLFW_RELEASE )
 				dPressed = false;
-			
 			if ( key == GLFW_KEY_W && action == GLFW_PRESS )
 				wPressed = true;
 			if ( key == GLFW_KEY_W && action == GLFW_RELEASE )
@@ -392,20 +402,48 @@ public class Game extends Listener{
 				sPressed = true;
 			if ( key == GLFW_KEY_S && action == GLFW_RELEASE )
 				sPressed = false;
-			if ( key == GLFW_KEY_Z && action == GLFW_PRESS )
-				setMine(selectedUnitsId);
+			//toggle whether to center camera on selected unit
 			if ( key == GLFW_KEY_T && action == GLFW_PRESS ) {
 				unitTracking = !unitTracking;
 			}
+			//fire weapons
+			if ( key == GLFW_KEY_Z && action == GLFW_PRESS )
+				setMine(selectedUnitsId);
 			if ( key == GLFW_KEY_SPACE && action == GLFW_PRESS )
 				fireProjectile(selectedUnitsId);
+			//generate a new map
 			if( key == GLFW_KEY_BACKSLASH && action == GLFW_PRESS) {
 				resetMap();
 			}
-			if( key == GLFW_KEY_0 && action == GLFW_PRESS) {
+			//cheats!
+			if( key == GLFW_KEY_1 && action == GLFW_PRESS && cheats) { //kill all units
 				for (Unit u : units) {
 					u.health -= 10;
 				}
+			}
+			if( key == GLFW_KEY_2 && action == GLFW_PRESS && cheats) { //decrease selected unit hp
+				for (Unit u : units) {
+					for (int i = 0; i < selectedUnitsId.size(); i++) {
+						if(selectedUnitsId.get(i) == u.getId()){
+							u.health--;
+						}
+					}
+				}
+			}
+			if( key == GLFW_KEY_3 && action == GLFW_PRESS && cheats) { //increase selected unit hp
+				for (Unit u : units) {
+					for (int i = 0; i < selectedUnitsId.size(); i++) {
+						if(selectedUnitsId.get(i) == u.getId()){
+							u.health++;
+						}
+					}
+				}
+			}
+			if( key == GLFW_KEY_4 && action == GLFW_PRESS && cheats) { //jump to noon
+				tick = 7000;
+			}
+			if( key == GLFW_KEY_5 && action == GLFW_PRESS && cheats) { //jump to midnight
+				tick = 19000;
 			}
 		});
 		//mouse clicks
@@ -423,15 +461,18 @@ public class Game extends Listener{
 			xpos.put(2, xpos.get(0) - windowXOffset);
 			ypos.put(2, ypos.get(0) - windowYOffset);
 			if ( button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+				//if game is active
 				if(gameState == 1) {
+					//center camera on spawn area
 					if(baseButton.isClicked(xpos.get(2), ypos.get(2))) {
 						centerCameraOnBase();
 					}
+					//pause the game
 					else if(pauseButton.isClicked(xpos.get(2), ypos.get(2))) {
 						gameState = 2;
 						gameStateChanged = true;
 					}
-					else {
+					else { //checks to see if a unit is clicked, if so select the unit
 						for (int u = 0; u < units.size(); u++) {
 							if(units.get(u).getOwnerId() == serverPlayerId && gamelogic.distance(xpos.get(1), ypos.get(1), units.get(u).getX(), units.get(u).getY()) <= 30){
 								boolean selectUnit = true;
@@ -449,11 +490,18 @@ public class Game extends Listener{
 						}
 					}
 				}
+				//if game is paused
 				else if(gameState == 2) {
+					//unpause game
 					if(pauseButton.isClicked(xpos.get(2), ypos.get(2)) || unpauseButton.isClicked(xpos.get(2), ypos.get(2))) {
 						gameState = 1;
 						gameStateChanged = true;
 					}
+					//toggle cheats - hidden button
+					else if(cheatsButton.isClicked(xpos.get(2), ypos.get(2))) {
+						cheats = !cheats;
+					}
+					//toggle sound
 					else if(soundButton.isClicked(xpos.get(2), ypos.get(2))) {
 						sound = !sound;
 						if(sound) {
@@ -463,6 +511,7 @@ public class Game extends Listener{
 							gameMusic.stop();
 						}
 					}
+					//change texture pack
 					else if(textureButton.isClicked(xpos.get(2), ypos.get(2))) {
 						staticFrame = false;
 						if(texturePack == 1) {
@@ -472,11 +521,13 @@ public class Game extends Listener{
 							texturePack = 1;
 						}
 					}
+					//close game
 					else if(exitButton.isClicked(xpos.get(2), ypos.get(2))) {
 						glfwSetWindowShouldClose(window, true);
 					}
 				}
 			}
+			//move units
 			else if ( button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
 				if(gameState == 1) {
 					moveOrder(xpos.get(1), ypos.get(1), selectedUnitsId);
@@ -567,7 +618,7 @@ public class Game extends Listener{
 			glEnable(GL_TEXTURE_2D);
 			
 			if(gameState == 1) {
-				
+				//make sure window redraws each frame when game is active
 				if(staticFrame) {
 					staticFrame = false;
 				}
@@ -577,15 +628,20 @@ public class Game extends Listener{
 				drawGame(model);
 				updateLightLevel();
 				
-				if(tick % 50 == 0) {
+				//checks if a team has won, if not then update scores of teams
+				if(tick % 200 == 0) {
 					checkWin();
 					updateScore();
 				}
 				
+				//check to see if a projectile has collided with a unit
 				checkProjectiles();
+				//check to see if any capture points have changed teams
 				updateCapturePoints();
+				//respawn units that have 0 hp
 				resetUnits(false);
 				
+				//heal units that are in their spawn area
 				if(tick % 100 == 0) {
 					healUnits();
 				}
@@ -790,17 +846,17 @@ public class Game extends Listener{
 		//set a random terrain for each tile
 		for (int i = 0; i < mapWidth; i++) {
 			for (int j = 0; j < mapHeight; j++) {
-				int seed = random.nextInt(10);
-				if(seed <= 1) {
+				int seed = random.nextInt(20);
+				if(seed <= 3) {
 					map[i][j] = 1;
 				}
-				else if(seed <= 6) {
+				else if(seed <= 15) {
 					map[i][j] = 2;
 				}
-				else if(seed <= 8) {
+				else if(seed <= 18) {
 					map[i][j] = 3;
 				}
-				else if(seed <= 9) {
+				else if(seed <= 19) {
 					map[i][j] = 4;
 				}
 			}
@@ -1445,6 +1501,7 @@ public class Game extends Listener{
 		model.render(gameScreenWidth + 140, 570, gameScreenWidth + 190, 620);
 	}
 	
+	//draws the lighting overlay on the game screen
 	public void drawLighting(Model model){
 		glDisable(GL_TEXTURE_2D);
 		
@@ -1457,6 +1514,7 @@ public class Game extends Listener{
 		glEnable(GL_TEXTURE_2D);
 	}
 	
+	//calls all the draw functions in order
 	public void drawGame(Model model) {
 		drawMap(model);
 		drawSidebar(model);
