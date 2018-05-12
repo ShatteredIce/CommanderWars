@@ -43,7 +43,7 @@ import static org.lwjgl.system.MemoryStack.*;
 import static org.lwjgl.system.MemoryUtil.*;
 
 public class Game extends Listener{
-	
+	//Setup for variables for game frame
 	int WINDOW_WIDTH = 840;
 	int WINDOW_HEIGHT = 640;
 	
@@ -55,7 +55,7 @@ public class Game extends Listener{
 	
 	int tileLength = 64;
 	
-	//camera variables
+	//Setup variables for camera
 	public double viewX = 0;
 	public double viewY = 0;
 	public double cameraSpeed = 10;
@@ -71,17 +71,18 @@ public class Game extends Listener{
     boolean panDown = false;
     boolean unitTracking = false;
     
-    //map variables
+    //Set up map variables
 	int mapWidth;
 	int mapHeight;
 	int[][] map;
 	Tile[][] tiles = null;
 	
+	//Controls Day/Night cycle
 	int tick = 0;
 	int ticksPerDay = 24000;
 	float lightLevel = 1;
 	
-	//game data
+	//Game data arraylists
 	ArrayList<Player> players = new ArrayList<>();
 	ArrayList<Unit> units = new ArrayList<>();
 	ArrayList<Projectile> projectiles = new ArrayList<>();
@@ -92,60 +93,66 @@ public class Game extends Listener{
 	boolean clientRecieved = false;
 	boolean spacePressed = false;
 	
-	//state variables
+	//State variables
 	int gameState = 1;
 	boolean gameStateChanged = false;
 	boolean staticFrame = false;
 	boolean cheats = false;
 	
-	//music
+	//Music file
 	File music_path = new File("music/enteringthestronghold.wav");
 	AudioInputStream music_input;
 	Clip gameMusic;
 	boolean sound = true;
 	
+	//Misc setup variables
 	int texturePack = 1;
 	int teamColor = 1;
 	int unitId = 0;
 	
-	//score variables
+	//Score variables
 	int red_players = 0;
 	int blue_players = 0;
 	
+	//Flag count/ point count variables
 	int red_flags = 0;
 	int blue_flags = 0;
 	int red_score = 0;
 	int blue_score = 0;
 	int pointsToWin = 10;
 	
+	//WASD Key press state
 	boolean aPressed = false;
 	boolean wPressed = false;
 	boolean dPressed = false;
 	boolean sPressed = false;
 	
-//	Player debug = new Player(this, "debug", 0);
+    //Player debug = new Player(this, "debug", 0);
 	int serverPlayerId = 0;
 	
 	// The window handle
 	private long window;
-	//rendering variables
+	//Rendering variables
 	final double[] textureCoords = {0, 0, 0, 1, 1, 0, 1, 1};
 	final int[] indices = {0, 1, 2, 2, 1, 3};
 	final double[] placeholder = {0, 0, 0, 0, 0, 0, 0, 0};
 
+	//Creates GameLogic and GameTextures
 	static GameLogic gamelogic = new GameLogic();
 	static GameTextures gametextures;
 	
-	//networking
+	//Networking
 	static Server server;
 	static int tcpPort = 27960;
 	static int udpPort = 27960;
 	
+	//Random map generation
 	Random random = new Random();
 	
+	//Creates Bitmap
 	static Bitmap bitmap;
 	
-	//clickable buttons
+	//Buttons
 	Button baseButton = new Button(gameScreenWidth + 10, 570, gameScreenWidth + 60, 620);
 	int baseIndex = 0;
 	Button pauseButton = new Button(gameScreenWidth + 140, 570, gameScreenWidth + 190, 620);
@@ -156,9 +163,9 @@ public class Game extends Listener{
 	Button exitButton = new Button(220, 370, 420, 425);
 	
 	public void run() throws IOException {
-		//create server
+		//Create servers
 		server = new Server(100000, 100000);
-		//register packets
+		//Register packets
 		server.getKryo().register(java.util.ArrayList.class);
 		server.getKryo().register(double[].class);
 		server.getKryo().register(int[].class);
@@ -177,32 +184,34 @@ public class Game extends Listener{
 		server.getKryo().register(UnitMovement.class);
 		server.bind(tcpPort, udpPort);
 		
-		//start server
+		//Start server
 		server.start();
 		System.out.println("Server Initialized");
 		
 		server.addListener(this);
 		
+		//Initialize game engine
 		initGLFW();
+		//Creates game loop
 		loop();
 
-		// Free the window callbacks and destroy the window
+		//Free the window callbacks and destroy the window
 		glfwFreeCallbacks(window);
 		glfwDestroyWindow(window);
 
-		// Terminate GLFW and free the error callback
+		//Terminate GLFW and free the error callback
 		glfwTerminate();
 		glfwSetErrorCallback(null).free();
 		server.stop();
 	}
 	
-	//when a connection is recieved
+	//When a connection is received
 	@Override
 	public void connected(Connection c){
 		System.out.println("recieved connection from " + c.getRemoteAddressTCP().getHostString());
-		//send map
+		//Send map
 		server.sendToTCP(c.getID(), new MapData(map, gameState, tick, redSpawns, blueSpawns));
-		//add previous players
+		//Add previous players
 		for (int i = 0; i < players.size(); i++) {
 			Player previous = players.get(i);
 			server.sendToTCP(c.getID(), new PlayerInfo(1, previous.getColor(), previous.getId()));
@@ -217,6 +226,7 @@ public class Game extends Listener{
 			newplayer = new Player(1, c.getID());
 			red_players++;
 		}
+		//Adds new player to array
 		players.add(newplayer);
 		server.sendToAllTCP(new PlayerInfo(1, newplayer.getColor(), newplayer.getId()));
 		String unitTeam = "client";
@@ -224,7 +234,9 @@ public class Game extends Listener{
 		int spawnindex;
 		double unitX = 0;
 		double unitY = 0;
+		//Unit starts facing in a random direction
 		double unitAngle = random.nextInt(360);
+		//Randomize where player spawns in spawn area
 		if(newplayer.getColor() == 1) {
 			spawnindex = random.nextInt(redSpawns.size());
 			unitX = redSpawns.get(spawnindex)[0] * tileLength + random.nextInt(65) + 32;
@@ -241,10 +253,11 @@ public class Game extends Listener{
 //		System.out.println("finished recieving client " + c.getID());
 	}
 	
-	//update clients of score, unit postions, and projectile positions each gametick
-	//also inform clients if game state was changed
+	//Update clients of score, unit postions, and projectile positions each gametick
+	//Also inform clients if game state was changed
 	public void updateClients(){
-		if(gameState == 1){
+		//Update scores and Day/Night cycle
+		if(gameState == 1){ 
 			server.sendToAllTCP(new ScoreData(red_score, blue_score, tick, lightLevel));
 			server.sendToAllTCP(new UnitPositions(units));
 			server.sendToAllTCP(new ProjectilePositions(projectiles));
@@ -255,15 +268,15 @@ public class Game extends Listener{
 		}
 	}
 	
-	//when an object is recieved
+	//When an object is Recieved
 	@Override
 	public void received(Connection c, Object obj) {
-		//client clicked on game screen, used to move client units
+		//Client clicked on game screen, used to move client units
 		if(obj instanceof MouseClick){
 			MouseClick click = (MouseClick) obj;
 			moveOrder(click.getX(), click.getY(), click.getUnitIds());
 		}
-		//process client keypresses for weapons
+		//Process client keypresses for weapons
 		else if(obj instanceof KeyPress) {
 			KeyPress key = (KeyPress) obj;
 			if(key.getKey() == GLFW_KEY_SPACE) {
@@ -273,14 +286,15 @@ public class Game extends Listener{
 				setMine(key.getUnitIds());
 			}
 		}
-		//process client keypresses for unit movement
+		//Process client keypresses for unit movement
 		else if(obj instanceof UnitMovement) {
 			UnitMovement data = (UnitMovement) obj;
 			moveUnitsManual(data.getUnitIds(), data.getLeft(), data.getUp(), data.getRight(), data.getDown());
 		}
-		//allows client to pause/resume the game
+		//Allows client to pause/resume the game
 		else if(obj instanceof Message) {
 			Message msg = (Message) obj;
+			//Will toggle pause for all players
 			if(msg.getText().equals("Toggle Pause") && gameState == 1) {
 				gameState = 2;
 				gameStateChanged = true;
@@ -292,11 +306,11 @@ public class Game extends Listener{
 		}
 	}
 	
-	//when a connection disconnects
+	//When a connection disconnects
 	@Override
 	public void disconnected(Connection c){
-//		System.out.println("A client disconnected");
-//		//remove player that disconnected
+		//System.out.println("A client disconnected");
+		//remove player that disconnected
 		for (int p = 0; p < players.size(); p++) {
 			if(players.get(p).getId() == c.getID()){
 				server.sendToAllTCP(new PlayerInfo(2, players.get(p).getColor(), players.get(p).getId()));
@@ -310,7 +324,7 @@ public class Game extends Listener{
 				break;
 			}
 		}
-		//remove units of player that disconnected
+		//Remove units of player that disconnected
 		for (int u = 0; u < units.size(); u++) {
 			if(units.get(u).getOwnerId() == c.getID()){
 				units.remove(u);
@@ -413,7 +427,7 @@ public class Game extends Listener{
 			if( key == GLFW_KEY_BACKSLASH && action == GLFW_PRESS) {
 				resetMap();
 			}
-			//cheats!
+			//Cheats!
 			if( key == GLFW_KEY_1 && action == GLFW_PRESS && cheats) { //kill all units
 				for (Unit u : units) {
 					u.health -= 10;
@@ -1079,7 +1093,7 @@ public class Game extends Listener{
 		return tilePos;
 	}
 	
-	//check projectile collisions
+	//Check projectile collisions
 	public void checkProjectiles() {
 		for (int i = 0; i < projectiles.size(); i++) {
     		Projectile p = projectiles.get(i);
@@ -1091,7 +1105,7 @@ public class Game extends Listener{
 				if(gamelogic.polygon_intersection(p.getPoints(), u.getPoints()) && (p.getColor() != u.getColor())){
 					
 					boolean unitInSpawn = false;
-					//check to see if unit is in spawn area
+					//Check to see if unit is in spawn area
 					if(u.getColor() == 1) { //red unit
 						for (int k = 0; k < redSpawns.size(); k++) {
 							int[] spawnPos = redSpawns.get(k);
@@ -1102,7 +1116,7 @@ public class Game extends Listener{
 							}
 						}
 					}
-					else if(u.getColor() == 2) { //blue unit
+					else if(u.getColor() == 2) { //Is blue unit
 						for (int k = 0; k < blueSpawns.size(); k++) {
 							int[] spawnPos = blueSpawns.get(k);
 							if((u.getX() > spawnPos[0] * tileLength) && (u.getX() < (spawnPos[0] + 2) * tileLength) 
@@ -1112,7 +1126,7 @@ public class Game extends Listener{
 							}
 						}
 					}
-					
+					//updates damage if not in spawn
 					if(!unitInSpawn) {
 						u.setHealth(u.getHealth() - p.getDamage());
 					}
@@ -1159,9 +1173,9 @@ public class Game extends Listener{
 	}
 	
 	
-	//heals units at friendly spawn areas
+	//Heals units at friendly spawn areas
 	public void healUnits() {
-		for (int i = 0; i < redSpawns.size(); i++) {
+		for (int i = 0; i < redSpawns.size(); i++) {//Heals red
 			for (Unit u : units) {
 				if(u.getColor() == 1) { //red unit
 					int[] spawnPos = redSpawns.get(i);
@@ -1172,7 +1186,7 @@ public class Game extends Listener{
 				}
 			}
 		}
-		for (int i = 0; i < blueSpawns.size(); i++) {
+		for (int i = 0; i < blueSpawns.size(); i++) {//Heals blue
 			for (Unit u : units) {
 				if(u.getColor() == 2) { //blue unit
 					int[] spawnPos = blueSpawns.get(i);
@@ -1185,14 +1199,14 @@ public class Game extends Listener{
 		}
 	}
 	
-	//calls the unit constructor
+	//Calls the unit constructor
 	public Unit createUnit(int newownerid, String newteam, double newx, double newy, double newangle, int newcolor){
 		Unit u = new Unit(unitId, newownerid, newteam, newx, newy, newangle, newcolor, new int[] {0, worldWidth, 0, worldHeight});
 		unitId++;
 		return u;
 	}
 	
-	//screen projection based on relative camera coordinates
+	//Screen projection based on relative camera coordinates
 	public void projectRelativeCameraCoordinates(){
 		glMatrixMode(GL_PROJECTION);
         glLoadIdentity(); // Resets any previous projection matrices
@@ -1200,7 +1214,7 @@ public class Game extends Listener{
         glMatrixMode(GL_MODELVIEW);
 	}
 	
-	//screen projection based on true window coordinates
+	//Screen projection based on true window coordinates
 	public void projectTrueWindowCoordinates(){
 		glMatrixMode(GL_PROJECTION);
         glLoadIdentity(); // Resets any previous projection matrices
@@ -1208,7 +1222,7 @@ public class Game extends Listener{
         glMatrixMode(GL_MODELVIEW);
 	}
 	
-	//scalars to help calculation
+	//Scalars to help calculation
 	public double getWidthScalar(){
 		return(double) cameraWidth / (double) WINDOW_WIDTH;
 	}
@@ -1226,18 +1240,18 @@ public class Game extends Listener{
 	}
 	
 	
-	//zoom camera in or out
+	//Zoom camera in or out
 	public void updateZoomLevel(boolean zoomOut){
 		DoubleBuffer xpos = BufferUtils.createDoubleBuffer(3);
 		DoubleBuffer ypos = BufferUtils.createDoubleBuffer(3);
 		glfwGetCursorPos(window, xpos, ypos);
-		//convert the glfw coordinate to our coordinate system
+		//Convert the glfw coordinate to our coordinate system
 		xpos.put(0, Math.min(Math.max(xpos.get(0), windowXOffset), WINDOW_WIDTH + windowXOffset));
 		ypos.put(0, Math.min(Math.max(ypos.get(0), windowYOffset), WINDOW_HEIGHT + windowYOffset));
-		//relative camera coordinates
+		//Relative camera coordinates
 		xpos.put(1, getWidthScalar() * (xpos.get(0) - windowXOffset) + viewX);
 		ypos.put(1, getHeightScalar() * (ypos.get(0) - windowYOffset) + viewY);
-		//true window coordinates
+		//True window coordinates
 		xpos.put(2, xpos.get(0) - windowXOffset);
 		ypos.put(2, ypos.get(0) - windowYOffset);
 		
@@ -1267,7 +1281,7 @@ public class Game extends Listener{
 			yAxisDistance = (gameScreenHeight/2d/WINDOW_HEIGHT);
 		}
 		
-		
+		//Zooms out camera
 		if(zoomOut){
 			if(cameraWidth * zoomLevel <= MAX_WIDTH && cameraHeight * zoomLevel <= MAX_HEIGHT){
 				cameraWidth *= zoomLevel;
@@ -1291,7 +1305,7 @@ public class Game extends Listener{
 				}
 			}
 		}
-		else{
+		else{ // Zooms in camera
 			if(cameraWidth / zoomLevel >= MIN_WIDTH && cameraHeight / zoomLevel >= MIN_HEIGHT){
 				cameraWidth /= zoomLevel;
 				cameraHeight /= zoomLevel;
@@ -1301,7 +1315,7 @@ public class Game extends Listener{
 		}
 	}
 	
-	//center camera view on base
+	//Center camera view on base
 	public void centerCameraOnBase(){
 		if(teamColor == 1) {
 			viewX = Math.min(worldWidth - cameraWidth * mapWidthScalar(),
@@ -1325,7 +1339,7 @@ public class Game extends Listener{
 		}
 	}
 	
-	//updates light level
+	//Updates light level
 	public void updateLightLevel() {
 		//update light level
 		//lightLevel goes from 0.5 (dark) to 0 (light)
@@ -1347,27 +1361,27 @@ public class Game extends Listener{
 		}
 	}
 	
-	//updates score 
+	//Updates score 
 	public void updateScore() {
 		red_score += red_flags;
 		blue_score += blue_flags;
 	}
 	
-	//check if one team has met the victory condition
+	//Check if one team has met the victory condition
 	public void checkWin() {
-		//red team wins!
+		//Red team wins!
 		if(red_score >= pointsToWin && red_score > blue_score) {
 			gameState = 3;
 			gameStateChanged = true;
 		}
-		//blue team wins!
+		//Blue team wins!
 		else if(blue_score >= pointsToWin && blue_score > red_score) {
 			gameState = 4;
 			gameStateChanged = true;
 		}
 	}
 	
-	//reset the map
+	//Reset the map
 	public void resetMap() {
 		redSpawns.clear();
 		blueSpawns.clear();
@@ -1399,7 +1413,7 @@ public class Game extends Listener{
 			}
 		}
 		
-		//display spawnpoints
+		//Display spawnpoints
 		for (int i = 0; i < redSpawns.size(); i++) {
 			int[] current = redSpawns.get(i);
 			gametextures.loadTexture(14);
@@ -1412,7 +1426,7 @@ public class Game extends Listener{
 			model.render(current[0] * tileLength, current[1] * tileLength, current[0] * tileLength + 128, current[1] * tileLength + 128);
 		}
 		
-		//display projectiles
+		//Display projectiles
 		for (int p = 0; p < projectiles.size(); p++) {
 			Projectile current = projectiles.get(p);
 			if(current.setPoints() == false){
@@ -1427,7 +1441,7 @@ public class Game extends Listener{
 			}
 		}
 		
-		//display units
+		//Display units
 		model.setTextureCoords(textureCoords);
 		for (Unit u : units) {
 			int[] tile = currentTile(u.getX(),u.getY());
@@ -1451,21 +1465,21 @@ public class Game extends Listener{
 		}
 	}
 	
-	//draw the sidebar and all its components
+	//Draw the sidebar and all its components
 	public void drawSidebar(Model model) {
 		projectTrueWindowCoordinates();
-		//render sidebar
+		//Render sidebar
 		gametextures.loadTexture(10);
 		model.setTextureCoords(textureCoords);
 		model.render(gameScreenWidth, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 		
-		//render day/night bar
+		//Render day/night bar
 		gametextures.loadTexture(11);
 		double shift = ((double) tick / (double) ticksPerDay) - 0.3;
 		model.setTextureCoords(new double[] {0 + shift, 0, 0 + shift, 1, 0.2 + shift, 0, 0.2 + shift, 1});
 		model.render(gameScreenWidth + 20, 40, gameScreenWidth + 180, 75);
 		
-		//render red flag and score
+		//Render red flag and score
 		if(texturePack == 1) {
 			gametextures.loadTexture(12);
 		}
@@ -1486,7 +1500,7 @@ public class Game extends Listener{
 		model.render(gameScreenWidth + 10, 160, gameScreenWidth + 60, 210);
 		bitmap.drawNumber(gameScreenWidth + 70, 170, gameScreenWidth + 95, 200, blue_score);
 		
-		//render hp bar and unit icon
+		//Render hp bar and unit icon
 		Unit selected = null;
 		if(selectedUnitsId.size() == 1) {
 			for (Unit u : units) {
@@ -1531,7 +1545,7 @@ public class Game extends Listener{
 		glEnable(GL_TEXTURE_2D);
 	}
 	
-	//calls all the draw functions in order
+	//Calls all the draw functions in order
 	public void drawGame(Model model) {
 		drawMap(model);
 		drawSidebar(model);
