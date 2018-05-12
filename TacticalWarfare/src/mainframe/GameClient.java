@@ -279,7 +279,7 @@ public class GameClient extends Listener{
 			
 			if ( key == GLFW_KEY_SPACE && action == GLFW_PRESS )
 				client.sendTCP(new KeyPress(GLFW_KEY_SPACE, selectedUnitsId));
-			if ( key == GLFW_KEY_Z && action == GLFW_PRESS )
+			if ( key == GLFW_KEY_R && action == GLFW_PRESS )
 				client.sendTCP(new KeyPress(GLFW_KEY_S, selectedUnitsId));
 			if ( key == GLFW_KEY_A && action == GLFW_PRESS) {
 				aPressed = true;

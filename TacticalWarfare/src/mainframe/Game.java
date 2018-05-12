@@ -123,7 +123,7 @@ public class Game extends Listener{
 	int blue_flags = 0;
 	int red_score = 0;
 	int blue_score = 0;
-	int pointsToWin = 10;
+	int pointsToWin = 2000;
 	
 	//WASD Key press state
 	boolean aPressed = false;
@@ -423,7 +423,7 @@ public class Game extends Listener{
 				unitTracking = !unitTracking;
 			}
 			//fire weapons
-			if ( key == GLFW_KEY_Z && action == GLFW_PRESS )
+			if ( key == GLFW_KEY_R && action == GLFW_PRESS )
 				setMine(selectedUnitsId);
 			if ( key == GLFW_KEY_SPACE && action == GLFW_PRESS )
 				fireProjectile(selectedUnitsId);
@@ -1412,6 +1412,9 @@ public class Game extends Listener{
 		redSpawns.clear();
 		blueSpawns.clear();
 		projectiles.clear();
+		for(Unit u : units){
+			u.setNumMines(0);
+		}
 		red_score = 0;
 		blue_score = 0;
 		red_flags = 0;
