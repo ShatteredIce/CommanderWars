@@ -2,6 +2,10 @@ package mainframe;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+
 import org.lwjgl.*;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
@@ -28,6 +32,7 @@ import rendering.Bitmap;
 import rendering.GameTextures;
 import rendering.Model;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.*;
@@ -71,7 +76,7 @@ public class GameClient extends Listener{
 	int[][] map;
 	Tile[][] tiles = null;
 	
-	float tick = 0;
+	int tick = 0;
 	int ticksPerDay = 24000;
 	float lightLevel = 1;
 	
@@ -85,10 +90,18 @@ public class GameClient extends Listener{
 	int myPlayerId = -1;
 	int teamColor = -1;
 	
+	//state variables
 	int gameState = 1;
 	boolean staticFrame = false;
 	boolean reloadMap = false;
-	int texturePack = 2;
+	
+	//music
+	File music_path = new File("music/enteringthestronghold.wav");
+	AudioInputStream music_input;
+	Clip gameMusic;
+	boolean sound = true;
+	
+	int texturePack = 1;
 	
 	int red_score = 0;
 	int blue_score = 0;
@@ -101,6 +114,10 @@ public class GameClient extends Listener{
 		
 	// The window handle
 	private long window;
+	//rendering variables
+	final double[] textureCoords = {0, 0, 0, 1, 1, 0, 1, 1};
+	final int[] indices = {0, 1, 2, 2, 1, 3};
+	final double[] placeholder = {0, 0, 0, 0, 0, 0, 0, 0};
 	
 	static GameLogic gamelogic = new GameLogic();
 	static GameTextures gametextures;
@@ -118,6 +135,10 @@ public class GameClient extends Listener{
 	Button baseButton = new Button(gameScreenWidth + 10, 570, gameScreenWidth + 60, 620);
 	int baseIndex = 0;
 	Button pauseButton = new Button(gameScreenWidth + 140, 570, gameScreenWidth + 190, 620);
+	Button unpauseButton = new Button(430, 150, 460, 180);
+	Button soundButton = new Button(220, 250, 420, 305);
+	Button textureButton = new Button(220, 310, 420, 365);
+	Button exitButton = new Button(220, 370, 420, 425);
 	
 	public void run() throws IOException {
 		
@@ -204,6 +225,18 @@ public class GameClient extends Listener{
 		window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Kingdomfall (Client)", NULL, NULL);
 		if ( window == NULL )
 			throw new RuntimeException("Failed to create the GLFW window");
+		
+		//setup music
+		try {
+			music_input = AudioSystem.getAudioInputStream(music_path);
+			gameMusic = AudioSystem.getClip();
+			gameMusic.open(music_input);
+			if (sound) {
+				gameMusic.loop(Clip.LOOP_CONTINUOUSLY);
+			}
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
 
 		// Setup a key callback. It will be called every time a key is pressed, repeated or released.
 		glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
@@ -320,8 +353,29 @@ public class GameClient extends Listener{
 					}
 				}
 				else if(gameState == 2) {
-					if(pauseButton.isClicked(xpos.get(2), ypos.get(2))) {
+					if(pauseButton.isClicked(xpos.get(2), ypos.get(2)) || unpauseButton.isClicked(xpos.get(2), ypos.get(2))) {
 						client.sendTCP(new Message("Toggle Pause"));
+					}
+					else if(soundButton.isClicked(xpos.get(2), ypos.get(2))) {
+						sound = !sound;
+						if(sound) {
+							gameMusic.start();
+						}
+						else {
+							gameMusic.stop();
+						}
+					}
+					else if(textureButton.isClicked(xpos.get(2), ypos.get(2))) {
+						staticFrame = false;
+						if(texturePack == 1) {
+							texturePack = 2;
+						}
+						else {
+							texturePack = 1;
+						}
+					}
+					else if(exitButton.isClicked(xpos.get(2), ypos.get(2))) {
+						glfwSetWindowShouldClose(window, true);
 					}
 				}
 			}
@@ -403,6 +457,8 @@ public class GameClient extends Listener{
 			ScoreData data = (ScoreData) obj;
 			red_score = data.getRed();
 			blue_score = data.getBlue();
+			tick = data.getTick();
+			lightLevel = data.getLightLevel();
 		}
 		else if(obj instanceof UnitPositions){
 			UnitPositions packet = (UnitPositions) obj;
@@ -467,10 +523,6 @@ public class GameClient extends Listener{
 		gametextures = new GameTextures();
 		bitmap = new Bitmap();
 		
-		final double[] textureCoords = {0, 0, 0, 1, 1, 0, 1, 1};
-		final int[] indices = {0, 1, 2, 2, 1, 3};
-		final double[] placeholder = {0, 0, 0, 0, 0, 0, 0, 0};
-		
 		Model model = new Model(placeholder, textureCoords, indices);
 		
 		// Run the rendering loop until the user has attempted to close
@@ -495,148 +547,13 @@ public class GameClient extends Listener{
 				}
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
 				
-				projectRelativeCameraCoordinates();
-						
-				//display tiles
-				for (int i = 0; i < tiles.length; i++) {
-					for (int j = 0; j < tiles[0].length; j++) {
-						tiles[i][j].setTexture(texturePack);
-						model.render(tiles[i][j].getVertices());
-					}
-				}
-				
-				//display spawnpoints
-				for (int i = 0; i < redSpawns.size(); i++) {
-					int[] current = redSpawns.get(i);
-					gametextures.loadTexture(14);
-					model.render(current[0] * tileLength, current[1] * tileLength, current[0] * tileLength + 128, current[1] * tileLength + 128);
-				}
-				
-				for (int i = 0; i < blueSpawns.size(); i++) {
-					int[] current = blueSpawns.get(i);
-					gametextures.loadTexture(15);
-					model.render(current[0] * tileLength, current[1] * tileLength, current[0] * tileLength + 128, current[1] * tileLength + 128);
-				}
-				
-				//display projectiles
-				for (ProjectileInfo p : projectiles) {
-					model.setTextureCoords(p.getTexCoords(lightLevel)); //allow for projectile animations
-					gametextures.loadTexture(p.getTexId());
-					model.render(p.getVertices());
-				}
-	
-				//display units
-				model.setTextureCoords(textureCoords);
-				for (UnitInfo u : units) {
-					gametextures.loadTexture(u.getColor());
-					model.render(u.getVertices());
-				}
-				
-				//display glow on selected units
-				gametextures.loadTexture(0);
-				for (UnitInfo u : units) {
-					for (int i = 0; i < selectedUnitsId.size(); i++) {
-						if(selectedUnitsId.get(i) == u.getId()){
-							model.render(u.getOutlineVertices());
-						}
-					}
-				}
-				
-				projectTrueWindowCoordinates();
-				
-				//render sidebar
-				gametextures.loadTexture(10);
-				model.setTextureCoords(textureCoords);
-				model.render(gameScreenWidth, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-				
-				//render day/night bar
-				gametextures.loadTexture(11);
-				double shift = ((double) tick / (double) ticksPerDay) - 0.3;
-				model.setTextureCoords(new double[] {0 + shift, 0, 0 + shift, 1, 0.2 + shift, 0, 0.2 + shift, 1});
-				model.render(gameScreenWidth + 20, 40, gameScreenWidth + 180, 75);
-				
-				//render red flag and score
-				if(texturePack == 1) {
-					gametextures.loadTexture(12);
-				}
-				else if(texturePack == 2) {
-					gametextures.loadTexture(32);
-				}
-				model.setTextureCoords(textureCoords);
-				model.render(gameScreenWidth + 10, 100, gameScreenWidth + 60, 150);
-				bitmap.drawNumber(gameScreenWidth + 70, 110, gameScreenWidth + 95, 140, red_score);
-				
-				//render blue flag and score
-				if(texturePack == 1) {
-					gametextures.loadTexture(13);
-				}
-				else if(texturePack == 2) {
-					gametextures.loadTexture(33);
-				}
-				model.render(gameScreenWidth + 10, 160, gameScreenWidth + 60, 210);
-				bitmap.drawNumber(gameScreenWidth + 70, 170, gameScreenWidth + 95, 200, blue_score);
-				
-				//render hp bar and unit icon
-				UnitInfo selected = null;
-				if(selectedUnitsId.size() == 1) {
-					for (UnitInfo u : units) {
-						if(u.getId() == selectedUnitsId.get(0)) {
-							selected = u;
-							break;
-						}
-					}
-					gametextures.loadTexture(16);
-					model.render(gameScreenWidth + 25, 240, gameScreenWidth + 175, 250);
-					gametextures.loadTexture(17);
-					model.render(gameScreenWidth + 25, 240, (int) (gameScreenWidth + 25 + (150 * (double) selected.getHealth()/(double) selected.getMaxHealth())), 250);
-					gametextures.loadTexture(selected.getColor());
-					model.render(gameScreenWidth + 65, 260, gameScreenWidth + 135, 295);
-				}
-				
-				//render return to base button
-				if(teamColor == 1) {
-					gametextures.loadTexture(14);
-				}
-				else if(teamColor == 2) {
-					gametextures.loadTexture(15);
-				}
-				model.render(gameScreenWidth + 10, 570, gameScreenWidth + 60, 620);
-
-				//display gear icon
-				gametextures.loadTexture(18);
-				model.render(gameScreenWidth + 140, 570, gameScreenWidth + 190, 620);
-				
-				glDisable(GL_TEXTURE_2D);
-				
+				drawGame(model);
+								
 				//send server movement 
 				if(sentMovement == false) {
 					client.sendTCP(new UnitMovement(selectedUnitsId, aPressed, wPressed, dPressed, sPressed));
 					sentMovement = true;
 				}
-				
-				tick++;
-				if(tick > ticksPerDay) {
-					tick = 0;
-				}
-				else if(tick < 2000) {
-					lightLevel = Math.abs(0.5f - (float) tick/(ticksPerDay/6));
-				}
-				else if(tick < 12000) {
-					lightLevel = 0;
-				}
-				else if(tick < 14000) {
-					lightLevel = ((float) tick-(ticksPerDay/2)) /(ticksPerDay/6);
-				}
-				else {
-					lightLevel = 0.5f;
-				}
-				
-				glColor4f(0f, 0f, 0f, lightLevel);
-				
-				gametextures.loadTexture(-1);
-				model.render(new double[] {0, 0, 0, gameScreenHeight, gameScreenWidth, 0, gameScreenWidth, gameScreenHeight});
-				
-				glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 				
 				if(unitTracking && selectedUnitsId.size() != 0) {
 					double avgX = 0;
@@ -680,8 +597,9 @@ public class GameClient extends Listener{
 			}
 			else if(gameState == 2) { //game paused
 				if(!staticFrame) {
+					drawGame(model);
 					projectTrueWindowCoordinates();
-					gametextures.loadTexture(10);
+					gametextures.loadTexture(23);
 					model.render(170, 140, 470, 440);
 					glfwSwapBuffers(window);
 					staticFrame = true;
@@ -689,6 +607,7 @@ public class GameClient extends Listener{
 			}
 			else if(gameState == 3) { //red won
 				if(!staticFrame) {
+					drawGame(model);
 					projectTrueWindowCoordinates();
 					gametextures.loadTexture(10);
 					model.render(100, 150, 540, 450);
@@ -698,6 +617,7 @@ public class GameClient extends Listener{
 			}
 			else if(gameState == 4) { //blue won
 				if(!staticFrame) {
+					drawGame(model);
 					projectTrueWindowCoordinates();
 					gametextures.loadTexture(10);
 					model.render(100, 150, 540, 450);
@@ -798,7 +718,6 @@ public class GameClient extends Listener{
 				cameraHeight *= zoomLevel;
 				viewX = oldX - cameraWidth * xAxisDistance;
 				viewY = oldY - cameraHeight * yAxisDistance;
-//				System.out.println(viewX + " " + cameraWidth); 
 				double gameScreenCameraWidth = cameraWidth * gameScreenWidth / WINDOW_WIDTH;
 				double gameScreenCameraHeight = cameraHeight * gameScreenHeight / WINDOW_HEIGHT;
 				if(viewX + gameScreenCameraWidth > worldWidth){
@@ -848,6 +767,141 @@ public class GameClient extends Listener{
 			}
 		}
 	}
+	
+	//draw the game map and sprites
+	public void drawMap(Model model) {
+		projectRelativeCameraCoordinates();
+		
+		//display tiles
+		for (int i = 0; i < tiles.length; i++) {
+			for (int j = 0; j < tiles[0].length; j++) {
+				tiles[i][j].setTexture(texturePack);
+				model.render(tiles[i][j].getVertices());
+			}
+		}
+		
+		//display spawnpoints
+		for (int i = 0; i < redSpawns.size(); i++) {
+			int[] current = redSpawns.get(i);
+			gametextures.loadTexture(14);
+			model.render(current[0] * tileLength, current[1] * tileLength, current[0] * tileLength + 128, current[1] * tileLength + 128);
+		}
+		
+		for (int i = 0; i < blueSpawns.size(); i++) {
+			int[] current = blueSpawns.get(i);
+			gametextures.loadTexture(15);
+			model.render(current[0] * tileLength, current[1] * tileLength, current[0] * tileLength + 128, current[1] * tileLength + 128);
+		}
+		
+		//display projectiles
+		for (ProjectileInfo p : projectiles) {
+			model.setTextureCoords(p.getTexCoords(lightLevel)); //allow for projectile animations
+			gametextures.loadTexture(p.getTexId());
+			model.render(p.getVertices());
+		}
+
+		//display units
+		model.setTextureCoords(textureCoords);
+		for (UnitInfo u : units) {
+			gametextures.loadTexture(u.getColor());
+			model.render(u.getVertices());
+		}
+		
+		//display glow on selected units
+		gametextures.loadTexture(0);
+		for (UnitInfo u : units) {
+			for (int i = 0; i < selectedUnitsId.size(); i++) {
+				if(selectedUnitsId.get(i) == u.getId()){
+					model.render(u.getOutlineVertices());
+				}
+			}
+		}
+	}
+		
+	//draw the sidebar and all its components
+	public void drawSidebar(Model model) {
+		projectTrueWindowCoordinates();
+		
+		//render sidebar
+		gametextures.loadTexture(10);
+		model.setTextureCoords(textureCoords);
+		model.render(gameScreenWidth, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+		
+		//render day/night bar
+		gametextures.loadTexture(11);
+		double shift = ((double) tick / (double) ticksPerDay) - 0.3;
+		model.setTextureCoords(new double[] {0 + shift, 0, 0 + shift, 1, 0.2 + shift, 0, 0.2 + shift, 1});
+		model.render(gameScreenWidth + 20, 40, gameScreenWidth + 180, 75);
+		
+		//render red flag and score
+		if(texturePack == 1) {
+			gametextures.loadTexture(12);
+		}
+		else if(texturePack == 2) {
+			gametextures.loadTexture(32);
+		}
+		model.setTextureCoords(textureCoords);
+		model.render(gameScreenWidth + 10, 100, gameScreenWidth + 60, 150);
+		bitmap.drawNumber(gameScreenWidth + 70, 110, gameScreenWidth + 95, 140, red_score);
+		
+		//render blue flag and score
+		if(texturePack == 1) {
+			gametextures.loadTexture(13);
+		}
+		else if(texturePack == 2) {
+			gametextures.loadTexture(33);
+		}
+		model.render(gameScreenWidth + 10, 160, gameScreenWidth + 60, 210);
+		bitmap.drawNumber(gameScreenWidth + 70, 170, gameScreenWidth + 95, 200, blue_score);
+		
+		//render hp bar and unit icon
+		UnitInfo selected = null;
+		if(selectedUnitsId.size() == 1) {
+			for (UnitInfo u : units) {
+				if(u.getId() == selectedUnitsId.get(0)) {
+					selected = u;
+					break;
+				}
+			}
+			gametextures.loadTexture(16);
+			model.render(gameScreenWidth + 25, 240, gameScreenWidth + 175, 250);
+			gametextures.loadTexture(17);
+			model.render(gameScreenWidth + 25, 240, (int) (gameScreenWidth + 25 + (150 * (double) selected.getHealth()/(double) selected.getMaxHealth())), 250);
+			gametextures.loadTexture(selected.getColor());
+			model.render(gameScreenWidth + 65, 260, gameScreenWidth + 135, 295);
+		}
+		
+		//render return to base button
+		if(teamColor == 1) {
+			gametextures.loadTexture(14);
+		}
+		else if(teamColor == 2) {
+			gametextures.loadTexture(15);
+		}
+		model.render(gameScreenWidth + 10, 570, gameScreenWidth + 60, 620);
+
+		//display gear icon
+		gametextures.loadTexture(18);
+		model.render(gameScreenWidth + 140, 570, gameScreenWidth + 190, 620);
+	}
+		
+		public void drawLighting(Model model){
+			glDisable(GL_TEXTURE_2D);
+			
+			glColor4f(0f, 0f, 0f, lightLevel);
+			
+			gametextures.loadTexture(-1);
+			model.render(new double[] {0, 0, 0, gameScreenHeight, gameScreenWidth, 0, gameScreenWidth, gameScreenHeight});
+			
+			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+			glEnable(GL_TEXTURE_2D);
+		}
+		
+		public void drawGame(Model model) {
+			drawMap(model);
+			drawSidebar(model);
+			drawLighting(model);
+		}
 
 }
 

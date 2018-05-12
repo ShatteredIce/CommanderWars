@@ -5,8 +5,13 @@ import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.*;
+
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
@@ -24,6 +29,12 @@ public class Launcher {
 	
 	int exitState = 0;
 	
+	//music
+	File music_path = new File("music/rainopeningtheme.wav");
+	AudioInputStream music_input;
+	Clip menuMusic;
+	boolean sound = true;
+	
 	public void run() {
 
 		init();
@@ -36,6 +47,8 @@ public class Launcher {
 		// Terminate GLFW and free the error callback
 		glfwTerminate();
 		glfwSetErrorCallback(null).free();
+		
+		menuMusic.close();
 		
 		if(exitState == 1) { //launch server
 			try {
@@ -71,6 +84,18 @@ public class Launcher {
 		window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Game Launcher", NULL, NULL);
 		if ( window == NULL )
 			throw new RuntimeException("Failed to create the GLFW window");
+		
+		//setup music
+		try {
+			music_input = AudioSystem.getAudioInputStream(music_path);
+			menuMusic = AudioSystem.getClip();
+			menuMusic.open(music_input);
+			if (sound) {
+				menuMusic.loop(Clip.LOOP_CONTINUOUSLY);
+			}
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
 
 		// Setup a key callback. It will be called every time a key is pressed, repeated or released.
 		glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {

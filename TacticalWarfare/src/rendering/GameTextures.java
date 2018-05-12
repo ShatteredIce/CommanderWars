@@ -23,6 +23,7 @@ public class GameTextures {
 	final static Texture hpred = new Texture("red.png");
 	final static Texture hpgreen = new Texture("lightgreen.png");
 	final static Texture gear = new Texture("gear.png");
+	final static Texture pauseMenu = new Texture("pause_menu.png");
 	
 	public void loadTexture(int id){
 		switch (id) {
@@ -72,6 +73,9 @@ public class GameTextures {
 			break;
 		case 22:
 			trap_armed.bind();
+			break;
+		case 23:
+			pauseMenu.bind();
 			break;
 		case 32:
 			redflag2.bind();
