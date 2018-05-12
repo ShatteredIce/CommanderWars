@@ -89,6 +89,7 @@ public class Game extends Listener{
 	int gameState = 1;
 	boolean gameStateChanged = false;
 	boolean staticFrame = false;
+	int texturePack = 1;
 	
 	int teamColor = 1;
 	
@@ -127,6 +128,8 @@ public class Game extends Listener{
 	//clickable buttons
 	Button baseButton = new Button(gameScreenWidth + 10, 570, gameScreenWidth + 60, 620);
 	int baseIndex = 0;
+	Button pauseButton = new Button(gameScreenWidth + 140, 570, gameScreenWidth + 190, 620);
+	Button unpauseButton = new Button(gameScreenWidth + 140, 570, gameScreenWidth + 190, 620);
 	
 	public void run() throws IOException {
 		//create server
@@ -244,6 +247,17 @@ public class Game extends Listener{
 		else if(obj instanceof UnitMovement) {
 			UnitMovement data = (UnitMovement) obj;
 			moveUnitsManual(data.getUnitIds(), data.getLeft(), data.getUp(), data.getRight(), data.getDown());
+		}
+		else if(obj instanceof Message) {
+			Message msg = (Message) obj;
+			if(msg.getText().equals("Toggle Pause") && gameState == 1) {
+				gameState = 2;
+				gameStateChanged = true;
+			}
+			else if(msg.getText().equals("Toggle Pause") && gameState == 2) {
+				gameState = 1;
+				gameStateChanged = true;
+			}
 		}
 	}
 	
@@ -379,6 +393,10 @@ public class Game extends Listener{
 					if(baseButton.isClicked(xpos.get(2), ypos.get(2))) {
 						centerCameraOnBase();
 					}
+					else if(pauseButton.isClicked(xpos.get(2), ypos.get(2))) {
+						gameState = 2;
+						gameStateChanged = true;
+					}
 					else {
 						for (int u = 0; u < units.size(); u++) {
 							if(units.get(u).getOwnerId() == serverPlayerId && gamelogic.distance(xpos.get(1), ypos.get(1), units.get(u).getX(), units.get(u).getY()) <= 30){
@@ -395,6 +413,12 @@ public class Game extends Listener{
 								}
 							}
 						}
+					}
+				}
+				else if(gameState == 2) {
+					if(pauseButton.isClicked(xpos.get(2), ypos.get(2))) {
+						gameState = 1;
+						gameStateChanged = true;
 					}
 				}
 			}
@@ -495,6 +519,10 @@ public class Game extends Listener{
 			
 			if(gameState == 1) {
 				
+				if(staticFrame) {
+					staticFrame = false;
+				}
+				
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
 			
 				projectRelativeCameraCoordinates();
@@ -502,7 +530,7 @@ public class Game extends Listener{
 				//display tiles
 				for (int i = 0; i < tiles.length; i++) {
 					for (int j = 0; j < tiles[0].length; j++) {
-						tiles[i][j].setTexture();
+						tiles[i][j].setTexture(texturePack);
 						model.render(tiles[i][j].getVertices());
 					}
 				}
@@ -572,13 +600,23 @@ public class Game extends Listener{
 				model.render(gameScreenWidth + 20, 40, gameScreenWidth + 180, 75);
 				
 				//render red flag and score
-				gametextures.loadTexture(12);
+				if(texturePack == 1) {
+					gametextures.loadTexture(12);
+				}
+				else if(texturePack == 2) {
+					gametextures.loadTexture(32);
+				}
 				model.setTextureCoords(textureCoords);
 				model.render(gameScreenWidth + 10, 100, gameScreenWidth + 60, 150);
 				bitmap.drawNumber(gameScreenWidth + 70, 110, gameScreenWidth + 95, 140, red_score);
 				
 				//render blue flag and score
-				gametextures.loadTexture(13);
+				if(texturePack == 1) {
+					gametextures.loadTexture(13);
+				}
+				else if(texturePack == 2) {
+					gametextures.loadTexture(33);
+				}
 				model.render(gameScreenWidth + 10, 160, gameScreenWidth + 60, 210);
 				bitmap.drawNumber(gameScreenWidth + 70, 170, gameScreenWidth + 95, 200, blue_score);
 				
@@ -608,6 +646,10 @@ public class Game extends Listener{
 					gametextures.loadTexture(15);
 				}
 				model.render(gameScreenWidth + 10, 570, gameScreenWidth + 60, 620);
+				
+				//display gear icon
+				gametextures.loadTexture(18);
+				model.render(gameScreenWidth + 140, 570, gameScreenWidth + 190, 620);
 				
 				glDisable(GL_TEXTURE_2D);
 				
@@ -676,8 +718,16 @@ public class Game extends Listener{
 				
 				glfwSwapBuffers(window); // swap the color buffers
 			}
-			
-			else if(gameState == 3) {
+			else if(gameState == 2) { //game paused
+				if(!staticFrame) {
+					projectTrueWindowCoordinates();
+					gametextures.loadTexture(10);
+					model.render(170, 140, 470, 440);
+					glfwSwapBuffers(window);
+					staticFrame = true;
+				}
+			}
+			else if(gameState == 3) { //red has won
 				if(!staticFrame) {
 					projectTrueWindowCoordinates();
 					gametextures.loadTexture(10);
@@ -686,7 +736,7 @@ public class Game extends Listener{
 					staticFrame = true;
 				}
 			}
-			else if(gameState == 4) {
+			else if(gameState == 4) { //blue has won
 				if(!staticFrame) {
 					projectTrueWindowCoordinates();
 					gametextures.loadTexture(10);
@@ -1346,6 +1396,7 @@ public class Game extends Listener{
 				Math.max(0, (redSpawns.get(0)[1] + 1) * (tileLength) - cameraHeight * mapHeightScalar() /2));
 		server.sendToAllTCP(new MapData(map, gameState, tick, redSpawns, blueSpawns));
 	}
+	
 
 }
 

@@ -12,6 +12,8 @@ public class GameTextures {
 	final static Texture border = new Texture("lightgray.png");
 	final static Texture redflag = new Texture("tower_red.png");
 	final static Texture blueflag = new Texture("tower_blue.png");
+	final static Texture redflag2 = new Texture("redflag.png");
+	final static Texture blueflag2 = new Texture("blueflag.png");
 	final static Texture projectile = new Texture("projectile_arrow.png");
 	final static Texture trap_unarmed = new Texture("trap_unarmed.png");
 	final static Texture trap_armed = new Texture("trap_armed.png");
@@ -20,6 +22,7 @@ public class GameTextures {
 	final static Texture bluespawn = new Texture("bluespawn.png");
 	final static Texture hpred = new Texture("red.png");
 	final static Texture hpgreen = new Texture("lightgreen.png");
+	final static Texture gear = new Texture("gear.png");
 	
 	public void loadTexture(int id){
 		switch (id) {
@@ -58,6 +61,9 @@ public class GameTextures {
 		case 17:
 			hpgreen.bind();
 			break;
+		case 18:
+			gear.bind();
+			break;
 		case 20:
 			projectile.bind();
 			break;
@@ -66,6 +72,12 @@ public class GameTextures {
 			break;
 		case 22:
 			trap_armed.bind();
+			break;
+		case 32:
+			redflag2.bind();
+			break;
+		case 33:
+			blueflag2.bind();
 			break;
 		default:
 			try {

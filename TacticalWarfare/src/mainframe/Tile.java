@@ -6,12 +6,20 @@ public class Tile {
 	static int tileWidth = 64;
 	static int tileHeight = 64;
 	
+	//texture pack 1
 	final static Texture tex1 = new Texture("rock.png");
 	final static Texture tex2 = new Texture("grass_tiles.png");
 	final static Texture tex3 = new Texture("forest_tiles_v2.png");
 	final static Texture tex4 = new Texture("tower_neutral.png");
 	final static Texture tex5 = new Texture("tower_red.png");
 	final static Texture tex6 = new Texture("tower_blue.png");
+	//texture pack 2
+	final static Texture tex11 = new Texture("mountain.png");
+	final static Texture tex12 = new Texture("grass.png");
+	final static Texture tex13 = new Texture("forest.png");
+	final static Texture tex14 = new Texture("neutralflag.png");
+	final static Texture tex15 = new Texture("redflag.png");
+	final static Texture tex16 = new Texture("blueflag.png");
 	
 	double[] vertices = new double[8];
 	
@@ -37,26 +45,50 @@ public class Tile {
 		vertices[7] = tileHeight * y_pos + tileHeight;
 	}
 	
-	public void setTexture(){
-		switch (id) {
-		case 1:
-			tex1.bind();
-			break;
-		case 2:
-			tex2.bind();
-			break;
-		case 3:
-			tex3.bind();
-			break;
-		case 4:
-			tex4.bind();
-			break;
-		case 5:
-			tex5.bind();
-			break;
-		case 6:
-			tex6.bind();
-			break;
+	public void setTexture(int pack){
+		if(pack == 1) {
+			switch (id) {
+			case 1:
+				tex1.bind();
+				break;
+			case 2:
+				tex2.bind();
+				break;
+			case 3:
+				tex3.bind();
+				break;
+			case 4:
+				tex4.bind();
+				break;
+			case 5:
+				tex5.bind();
+				break;
+			case 6:
+				tex6.bind();
+				break;
+			}
+		}
+		else if(pack == 2) {
+			switch (id) {
+			case 1:
+				tex11.bind();
+				break;
+			case 2:
+				tex12.bind();
+				break;
+			case 3:
+				tex13.bind();
+				break;
+			case 4:
+				tex14.bind();
+				break;
+			case 5:
+				tex15.bind();
+				break;
+			case 6:
+				tex16.bind();
+				break;
+			}
 		}
 	}
 	
