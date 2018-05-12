@@ -1375,12 +1375,14 @@ public class Game extends Listener{
 	public void checkWin() {
 		//Red team wins!
 		if(red_score >= pointsToWin && red_score > blue_score) {
+			server.sendToAllTCP(new ScoreData(red_score, blue_score, tick, lightLevel));
 			saveScore();
 			gameState = 3;
 			gameStateChanged = true;
 		}
 		//Blue team wins!
 		else if(blue_score >= pointsToWin && blue_score > red_score) {
+			server.sendToAllTCP(new ScoreData(red_score, blue_score, tick, lightLevel));
 			saveScore();
 			gameState = 4;
 			gameStateChanged = true;

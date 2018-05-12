@@ -30,6 +30,8 @@ public class Launcher {
 	final double[] textureCoords = {0, 0, 0, 1, 1, 0, 1, 1};
 	final int[] indices = {0, 1, 2, 2, 1, 3};
 	final double[] placeholder = {0, 0, 0, 0, 0, 0, 0, 0};
+	
+	boolean showCredits = false;
 
 	int WINDOW_WIDTH = 640;
 	int WINDOW_HEIGHT = 640;
@@ -116,7 +118,10 @@ public class Launcher {
 			DoubleBuffer ypos = BufferUtils.createDoubleBuffer(1);
 			glfwGetCursorPos(window, xpos, ypos);
 			if ( button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-				if(xpos.get(0) > 20 && xpos.get(0) < 320 && ypos.get(0) > 180 && ypos.get(0) < 250) {
+				if(showCredits){
+					showCredits = false;
+				}
+				else if(xpos.get(0) > 20 && xpos.get(0) < 320 && ypos.get(0) > 180 && ypos.get(0) < 250) {
 					exitState = 1;
 					glfwSetWindowShouldClose(window, true);
 				}
@@ -126,6 +131,9 @@ public class Launcher {
 				}
 				else if(xpos.get(0) > 20 && xpos.get(0) < 320 && ypos.get(0) > 380 && ypos.get(0) < 450) {
 					glfwSetWindowShouldClose(window, true);
+				}
+				else if(xpos.get(0) > 41 && xpos.get(0) < 97 && ypos.get(0) > 530 && ypos.get(0) < 597) {
+					showCredits = true;
 				}
 			}
 		});
@@ -170,6 +178,7 @@ public class Launcher {
 		glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
 		
 		final Texture mainMenu = new Texture("Kingdomfall_menu.png");
+		final Texture credits = new Texture("Kingdomfall_credits.png");
 		Model model = new Model(placeholder, textureCoords, indices);
 		
 		glEnable(GL_TEXTURE_2D);
@@ -180,7 +189,12 @@ public class Launcher {
 			
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
 			projectTrueWindowCoordinates();
-			mainMenu.bind();
+			if(showCredits){
+				credits.bind();
+			}
+			else{
+				mainMenu.bind();
+			}
 			model.render(0, 0, 640, 640);
 			glfwSwapBuffers(window); // swap the color buffers
 			// Poll for window events. The key callback above will only be
