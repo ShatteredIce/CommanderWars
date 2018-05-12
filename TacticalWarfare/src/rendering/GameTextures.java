@@ -25,10 +25,11 @@ public class GameTextures {
 	final static Texture hpgreen = new Texture("lightgreen.png");
 	final static Texture gear = new Texture("gear.png");
 	final static Texture pauseMenu = new Texture("pause_menu.png");
-	final static Texture redVictory = new Texture("lightgreen.png");
-	final static Texture redDefeat = new Texture("lightgray.png");
-	final static Texture blueVictory = new Texture("lightgreen.png");
-	final static Texture blueDefeat = new Texture("lightgray.png");
+	final static Texture redVictory = new Texture("Kingdomfall_Victory.png");
+	final static Texture redDefeat = new Texture("Kingdomfall_Defeat.png");
+	final static Texture blueVictory = new Texture("Kingdomfall_Victory.png");
+	final static Texture blueDefeat = new Texture("Kingdomfall_Defeat.png");
+	final static Texture mainMenu = new Texture("Kingdomfall_menu.png");
 	
 	//bind texture corresponding to id
 	public void loadTexture(int id){
@@ -103,6 +104,9 @@ public class GameTextures {
 			break;
 		case 33:
 			blueflag2.bind();
+			break;
+		case 34:
+			mainMenu.bind();
 			break;
 		default:
 			try {

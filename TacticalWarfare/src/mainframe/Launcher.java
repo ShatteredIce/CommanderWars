@@ -5,6 +5,9 @@ import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.*;
 
+import rendering.Model;
+import rendering.Texture;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.*;
@@ -23,7 +26,11 @@ public class Launcher {
 	
 	// The window handle
 	private long window;
-	
+	//rendering variables
+	final double[] textureCoords = {0, 0, 0, 1, 1, 0, 1, 1};
+	final int[] indices = {0, 1, 2, 2, 1, 3};
+	final double[] placeholder = {0, 0, 0, 0, 0, 0, 0, 0};
+
 	int WINDOW_WIDTH = 640;
 	int WINDOW_HEIGHT = 640;
 	
@@ -109,13 +116,15 @@ public class Launcher {
 			DoubleBuffer ypos = BufferUtils.createDoubleBuffer(1);
 			glfwGetCursorPos(window, xpos, ypos);
 			if ( button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-				System.out.println(xpos.get(0) + " " + ypos.get(0));
-				if(xpos.get(0) > 140 && xpos.get(0) < 540 && ypos.get(0) > 100 && ypos.get(0) < 300) {
+				if(xpos.get(0) > 20 && xpos.get(0) < 320 && ypos.get(0) > 180 && ypos.get(0) < 250) {
 					exitState = 1;
 					glfwSetWindowShouldClose(window, true);
 				}
-				else if(xpos.get(0) > 140 && xpos.get(0) < 540 && ypos.get(0) > 400 && ypos.get(0) < 600) {
+				else if(xpos.get(0) > 20 && xpos.get(0) < 320 && ypos.get(0) > 280 && ypos.get(0) < 350) {
 					exitState = 2;
+					glfwSetWindowShouldClose(window, true);
+				}
+				else if(xpos.get(0) > 20 && xpos.get(0) < 320 && ypos.get(0) > 380 && ypos.get(0) < 450) {
 					glfwSetWindowShouldClose(window, true);
 				}
 			}
@@ -159,14 +168,21 @@ public class Launcher {
 
 		// Set the clear color
 		glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
+		
+		final Texture mainMenu = new Texture("Kingdomfall_menu.png");
+		Model model = new Model(placeholder, textureCoords, indices);
+		
+		glEnable(GL_TEXTURE_2D);
 
 		// Run the rendering loop until the user has attempted to close
 		// the window or has pressed the ESCAPE key.
 		while ( !glfwWindowShouldClose(window) ) {
 			
-//			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
-//			glfwSwapBuffers(window); // swap the color buffers
-
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
+			projectTrueWindowCoordinates();
+			mainMenu.bind();
+			model.render(0, 0, 640, 640);
+			glfwSwapBuffers(window); // swap the color buffers
 			// Poll for window events. The key callback above will only be
 			// invoked during this call.
 			glfwPollEvents();
@@ -176,6 +192,14 @@ public class Launcher {
 	public static void main(String[] args) {
 		new Launcher().run();
 
+	}
+	
+	//screen projection based on true window coordinates
+	public void projectTrueWindowCoordinates(){
+		glMatrixMode(GL_PROJECTION);
+        glLoadIdentity(); // Resets any previous projection matrices
+        glOrtho(0, WINDOW_WIDTH, WINDOW_HEIGHT, 0, 1, -1);
+        glMatrixMode(GL_MODELVIEW);
 	}
 
 }
