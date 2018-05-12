@@ -612,7 +612,12 @@ public class GameClient extends Listener{
 				if(!staticFrame) {
 					drawGame(model);
 					projectTrueWindowCoordinates();
-					gametextures.loadTexture(10);
+					if(teamColor == 1) {
+						gametextures.loadTexture(24);
+					}
+					else {
+						gametextures.loadTexture(25);
+					}
 					model.render(100, 150, 540, 450);
 					glfwSwapBuffers(window);
 					staticFrame = true;
@@ -622,7 +627,12 @@ public class GameClient extends Listener{
 				if(!staticFrame) {
 					drawGame(model);
 					projectTrueWindowCoordinates();
-					gametextures.loadTexture(10);
+					if(teamColor == 2) {
+						gametextures.loadTexture(26);
+					}
+					else {
+						gametextures.loadTexture(27);
+					}
 					model.render(100, 150, 540, 450);
 					glfwSwapBuffers(window);
 					staticFrame = true;

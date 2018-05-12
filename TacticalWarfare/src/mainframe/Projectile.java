@@ -35,7 +35,11 @@ public class Projectile {
 	public void createPoints(){
 		int width = 1;
 		int height = 1;
-		if(texId == 20) {
+		if(texId == 19) {
+			width = 2;
+			height = 8;
+		}
+		else if(texId == 20) {
 			 width = 5;
 			 height = 22;
 		}

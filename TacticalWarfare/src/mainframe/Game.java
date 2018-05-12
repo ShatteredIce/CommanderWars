@@ -116,7 +116,7 @@ public class Game extends Listener{
 	int blue_flags = 0;
 	int red_score = 0;
 	int blue_score = 0;
-	int pointsToWin = 2000;
+	int pointsToWin = 10;
 	
 	boolean aPressed = false;
 	boolean wPressed = false;
@@ -154,10 +154,6 @@ public class Game extends Listener{
 	Button soundButton = new Button(220, 250, 420, 305);
 	Button textureButton = new Button(220, 310, 420, 365);
 	Button exitButton = new Button(220, 370, 420, 425);
-	
-//	public Game() throws IOException, LineUnavailableException, UnsupportedAudioFileException {
-//    	
-//    }
 	
 	public void run() throws IOException {
 		//create server
@@ -445,6 +441,15 @@ public class Game extends Listener{
 			if( key == GLFW_KEY_5 && action == GLFW_PRESS && cheats) { //jump to midnight
 				tick = 19000;
 			}
+			if( key == GLFW_KEY_0 && action == GLFW_REPEAT && cheats) { //activate easter egg
+				for (Unit u : units) {
+					for (int i = 0; i < selectedUnitsId.size(); i++) {
+						if(selectedUnitsId.get(i) == u.getId()){
+							projectiles.add(new Projectile(u, u.getColor(), u.getX(), u.getY(), u.getAngle() + random.nextInt(7) - 3, 6, 1, 100, 19));
+						}
+					}
+				}
+			}
 		});
 		//mouse clicks
 		glfwSetMouseButtonCallback (window, (window, button, action, mods) -> {
@@ -630,8 +635,8 @@ public class Game extends Listener{
 				
 				//checks if a team has won, if not then update scores of teams
 				if(tick % 200 == 0) {
-					checkWin();
 					updateScore();
+					checkWin();
 				}
 				
 				//check to see if a projectile has collided with a unit
@@ -703,7 +708,12 @@ public class Game extends Listener{
 				if(!staticFrame) {
 					drawGame(model);
 					projectTrueWindowCoordinates();
-					gametextures.loadTexture(10);
+					if(teamColor == 1) {
+						gametextures.loadTexture(24);
+					}
+					else {
+						gametextures.loadTexture(25);
+					}
 					model.render(100, 150, 540, 450);
 					glfwSwapBuffers(window);
 					staticFrame = true;
@@ -713,7 +723,12 @@ public class Game extends Listener{
 				if(!staticFrame) {
 					drawGame(model);
 					projectTrueWindowCoordinates();
-					gametextures.loadTexture(10);
+					if(teamColor == 2) {
+						gametextures.loadTexture(26);
+					}
+					else {
+						gametextures.loadTexture(27);
+					}
 					model.render(100, 150, 540, 450);
 					glfwSwapBuffers(window);
 					staticFrame = true;

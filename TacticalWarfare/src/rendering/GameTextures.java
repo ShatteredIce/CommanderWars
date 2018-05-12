@@ -14,6 +14,7 @@ public class GameTextures {
 	final static Texture blueflag = new Texture("tower_blue.png");
 	final static Texture redflag2 = new Texture("redflag.png");
 	final static Texture blueflag2 = new Texture("blueflag.png");
+	final static Texture mgun = new Texture("projectile_mgun.png");
 	final static Texture projectile = new Texture("projectile_arrow.png");
 	final static Texture trap_unarmed = new Texture("trap_unarmed.png");
 	final static Texture trap_armed = new Texture("trap_armed.png");
@@ -24,7 +25,12 @@ public class GameTextures {
 	final static Texture hpgreen = new Texture("lightgreen.png");
 	final static Texture gear = new Texture("gear.png");
 	final static Texture pauseMenu = new Texture("pause_menu.png");
+	final static Texture redVictory = new Texture("lightgreen.png");
+	final static Texture redDefeat = new Texture("lightgray.png");
+	final static Texture blueVictory = new Texture("lightgreen.png");
+	final static Texture blueDefeat = new Texture("lightgray.png");
 	
+	//bind texture corresponding to id
 	public void loadTexture(int id){
 		switch (id) {
 		case -1:
@@ -65,6 +71,9 @@ public class GameTextures {
 		case 18:
 			gear.bind();
 			break;
+		case 19:
+			mgun.bind();
+			break;
 		case 20:
 			projectile.bind();
 			break;
@@ -76,6 +85,18 @@ public class GameTextures {
 			break;
 		case 23:
 			pauseMenu.bind();
+			break;
+		case 24:
+			redVictory.bind();
+			break;
+		case 25:
+			redDefeat.bind();
+			break;
+		case 26:
+			blueVictory.bind();
+			break;
+		case 27:
+			blueDefeat.bind();
 			break;
 		case 32:
 			redflag2.bind();
