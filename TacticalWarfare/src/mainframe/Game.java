@@ -157,7 +157,7 @@ public class Game extends Listener{
 	
 	public void run() throws IOException {
 		//create server
-		server = new Server(32768, 32768);
+		server = new Server(100000, 100000);
 		//register packets
 		server.getKryo().register(java.util.ArrayList.class);
 		server.getKryo().register(double[].class);
@@ -244,9 +244,11 @@ public class Game extends Listener{
 	//update clients of score, unit postions, and projectile positions each gametick
 	//also inform clients if game state was changed
 	public void updateClients(){
-		server.sendToAllTCP(new ScoreData(red_score, blue_score, tick, lightLevel));
-		server.sendToAllTCP(new UnitPositions(units));
-		server.sendToAllTCP(new ProjectilePositions(projectiles));
+		if(gameState == 1){
+			server.sendToAllTCP(new ScoreData(red_score, blue_score, tick, lightLevel));
+			server.sendToAllTCP(new UnitPositions(units));
+			server.sendToAllTCP(new ProjectilePositions(projectiles));
+		}
 		if(gameStateChanged) {
 			server.sendToAllTCP(new Message("Game State Change", gameState));
 			gameStateChanged = false;

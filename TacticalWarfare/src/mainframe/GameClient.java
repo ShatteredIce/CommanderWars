@@ -146,7 +146,7 @@ public class GameClient extends Listener{
 	public void run() throws IOException {
 		
 		//create client
-		client = new Client(32768, 32768);
+		client = new Client(100000, 100000);
 		//register packets
 		client.getKryo().register(java.util.ArrayList.class);
 		client.getKryo().register(double[].class);
