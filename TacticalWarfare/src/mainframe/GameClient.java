@@ -881,6 +881,7 @@ public class GameClient extends Listener{
 			gametextures.loadTexture(17);
 			model.render(gameScreenWidth + 25, 240, (int) (gameScreenWidth + 25 + (150 * (double) selected.getHealth()/(double) selected.getMaxHealth())), 250);
 			gametextures.loadTexture(selected.getColor());
+			model.setTextureCoords(new double[] {1, 1, 1, 0, 0, 1, 0, 0});
 			model.render(gameScreenWidth + 65, 260, gameScreenWidth + 135, 295);
 		}
 		
@@ -891,6 +892,7 @@ public class GameClient extends Listener{
 		else if(teamColor == 2) {
 			gametextures.loadTexture(15);
 		}
+		model.setTextureCoords(textureCoords);
 		model.render(gameScreenWidth + 10, 570, gameScreenWidth + 60, 620);
 
 		//display gear icon
