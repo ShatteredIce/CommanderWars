@@ -177,8 +177,8 @@ public class Launcher {
 		// Set the clear color
 		glClearColor(1.0f, 0.0f, 0.0f, 0.0f);
 		
-		final Texture mainMenu = new Texture("Kingdomfall_menu.png");
-		final Texture credits = new Texture("Kingdomfall_credits.png");
+		final Texture mainMenu = new Texture("main_menu.png");
+		final Texture credits = new Texture("credits.png");
 		Model model = new Model(placeholder, textureCoords, indices);
 		
 		glEnable(GL_TEXTURE_2D);
